@@ -60,7 +60,7 @@ export default function Kalender() {
   };
 
   return (
-    <div className="min-h-dvh bg-background bg-mesh dark:bg-mesh-dark">
+    <div className="min-h-dvh bg-background">
       <Header />
 
       <main

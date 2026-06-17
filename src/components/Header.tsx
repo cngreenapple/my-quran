@@ -32,7 +32,7 @@ export function Header() {
   return (
     <>
       <header
-        className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70"
+        className="sticky top-0 z-40 w-full border-b border-border/60 bg-background"
         role="banner"
       >
         <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4 max-w-5xl">
@@ -124,7 +124,7 @@ function BottomNav() {
   const location = useLocation();
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/60 bg-background pb-safe"
       aria-label="Menu navigasi bawah"
     >
       <div className="grid grid-cols-4 gap-0.5 p-1.5 max-w-2xl mx-auto">

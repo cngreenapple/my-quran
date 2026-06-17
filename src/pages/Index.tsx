@@ -113,7 +113,7 @@ export default function Index() {
   ];
 
   return (
-    <div className="min-h-dvh bg-background bg-mesh dark:bg-mesh-dark">
+    <div className="min-h-dvh bg-background">
       {/* Skip to content link for keyboard users */}
       <a
         href="#main-content"
@@ -155,7 +155,7 @@ export default function Index() {
               </svg>
             </div>
             <div className="relative">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider mb-3">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider mb-3">
                 <Sparkles className="w-3 h-3" aria-hidden="true" />
                 Al-Qur'an Digital
               </div>
