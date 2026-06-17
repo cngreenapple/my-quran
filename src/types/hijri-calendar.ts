@@ -15,6 +15,15 @@ export interface IslamicHoliday {
   greeting?: string; // Indonesian greeting
 }
 
+export interface PuasaSunnahMarker {
+  id: string; // ID puasa sunnah
+  title: string; // judul singkat
+  emoji: string;
+  color: "emerald" | "amber" | "sky" | "rose" | "violet";
+  note?: string;
+  isRecurring?: boolean;
+}
+
 export interface HijriMonth {
   number: number;
   name: string;
@@ -40,6 +49,7 @@ export interface CalendarDay {
   isToday: boolean;
   isWeekend: boolean;
   holidays: IslamicHoliday[];
+  puasaSunnah: PuasaSunnahMarker[];
   isJumat: boolean;
 }
 

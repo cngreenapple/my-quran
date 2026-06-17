@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Calendar as CalendarIcon, Sparkles, Moon } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Sparkles, Moon, Info, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -24,6 +24,11 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
   const days = useMemo(() => getMonthCalendar(viewDate.year, viewDate.month, { today }), [viewDate.year, viewDate.month, today]);
   const upcomingEvents = useMemo(() => getUpcomingEvents({ daysAhead: 90 }), []);
   const todayInfo = useMemo(() => getTodayInfo(today), [today]);
+
+  // Hitung jumlah puasa sunnah di bulan ini
+  const puasaInMonth = useMemo(() => {
+    return days.reduce((sum, d) => sum + d.puasaSunnah.length, 0);
+  }, [days]);
 
   const handlePrev = () => setViewDate((p) => p.month === 0 ? { year: p.year - 1, month: 11 } : { ...p, month: p.month - 1 });
   const handleNext = () => setViewDate((p) => p.month === 11 ? { year: p.year + 1, month: 0 } : { ...p, month: p.month + 1 });
@@ -65,6 +70,21 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
                   <p className="text-sm font-semibold">{todayInfo.holidays[0].name} 🎉</p>
                 </div>
               )}
+              {/* Tampilkan puasa sunnah hari ini */}
+              {(() => {
+                const todayCells = days.filter(d => d.isToday);
+                if (todayCells.length > 0 && todayCells[0].puasaSunnah.length > 0) {
+                  return (
+                    <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/15 backdrop-blur-sm">
+                      <Moon className="w-4 h-4" aria-hidden="true" />
+                      <p className="text-sm font-semibold">
+                        {todayCells[0].puasaSunnah.map(p => p.title).join(", ")}
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </CardContent>
         </Card>
@@ -89,6 +109,37 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
               </CardContent>
             </Card>
 
+            {/* Info Puasa Sunnah di bulan ini */}
+            {puasaInMonth > 0 && (
+              <Card className="border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0" aria-hidden="true">
+                      <Moon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-sm text-foreground">Puasa Sunnah Bulan Ini</p>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-700 dark:text-violet-400">
+                          {puasaInMonth}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Terdapat {puasaInMonth} kesempatan berpuasa sunnah di bulan ini. Lihat detail di tab "Hari Libur" atau halaman Puasa Sunnah.
+                      </p>
+                      <Link
+                        to="/puasa-sunnah"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline"
+                      >
+                        <Star className="w-3 h-3" />
+                        Lihat detail puasa sunnah
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="border-border/60">
               <CardContent className="p-4">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Keterangan</p>
@@ -97,11 +148,17 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200" aria-hidden="true" /><span>Jumat</span></div>
                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-muted" aria-hidden="true" /><span>Weekend</span></div>
                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30" aria-hidden="true" /><span>Hari besar</span></div>
+                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-violet-500/15 ring-1 ring-violet-500/30" aria-hidden="true" /><span>Puasa sunnah</span></div>
+                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-sky-500/15 ring-1 ring-sky-500/30" aria-hidden="true" /><span>Senin/Kamis</span></div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/40 text-[11px] text-muted-foreground leading-relaxed">
                   <p className="flex items-start gap-1.5">
-                    <Moon className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-                    <span>Konversi kalender berdasarkan algoritma <strong>Umm al-Qura</strong>. Tanggal Hijriah dapat berbeda ±1 hari tergantung rukyat lokal.</span>
+                    <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
+                    <span>
+                      Konversi kalender berdasarkan algoritma <strong>Umm al-Qura</strong>. Tanggal Hijriah dapat berbeda ±1 hari tergantung rukyat lokal.
+                      Puasa <strong>Senin & Kamis</strong> ditampilkan otomatis di setiap hari Senin dan Kamis.
+                      Puasa <strong>Ayyamul Bidh</strong> (tanggal 13, 14, 15) muncul di setiap bulan.
+                    </span>
                   </p>
                 </div>
               </CardContent>

@@ -12,12 +12,14 @@ import type {
   IslamicHoliday,
   HijriMonth,
   UpcomingEvent,
+  PuasaSunnahMarker,
 } from "@/types/hijri-calendar";
 import {
   ISLAMIC_HOLIDAYS,
   HIJRI_MONTHS,
   WEEKDAYS_ID,
 } from "@/data/islamic-holidays";
+import { getPuasaSunnahForDate } from "@/data/puasa-sunnah-dates";
 
 /**
  * Konversi Gregorian → Hijri
@@ -146,6 +148,25 @@ export function getHolidaysForHijriDate(
 }
 
 /**
+ * Get list of puasa sunnah markers for a specific Hijri date
+ */
+export function getPuasaSunnahMarkers(
+  hijriDay: number,
+  hijriMonth: number,
+  weekday: number,
+): PuasaSunnahMarker[] {
+  const puasaList = getPuasaSunnahForDate(hijriDay, hijriMonth, weekday);
+  return puasaList.map(({ puasa, note, isRecurring }) => ({
+    id: puasa.id,
+    title: puasa.title,
+    emoji: puasa.emoji,
+    color: puasa.color,
+    note: note,
+    isRecurring,
+  }));
+}
+
+/**
  * Get all calendar days for a Gregorian month
  */
 export function getMonthCalendar(
@@ -190,6 +211,7 @@ export function getMonthCalendar(
       isWeekend,
       isJumat,
       holidays: getHolidaysForHijriDate(hijri.day, hijri.month),
+      puasaSunnah: getPuasaSunnahMarkers(hijri.day, hijri.month, weekday),
     });
   }
 
