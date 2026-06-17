@@ -126,6 +126,28 @@
       padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
     }
   }
+
+  /* ====== Chrome Android GPU compositing fix ======
+     Backdrop-filter + semi-transparent layers + transformed elements
+     sering menyebabkan sub-pixel rendering corruption di Chrome Android.
+     Disable backdrop-filter secara global dan matikan overflow-anchor
+     yang bisa trigger reposition glitches saat konten di-load. */
+  * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  body {
+    overflow-anchor: none;
+  }
+  /* Force hardware acceleration dengan cara yang aman */
+  .bg-card,
+  .bg-background,
+  .bg-muted,
+  .bg-primary {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    isolation: isolate;
+  }
 }
 
 @layer utilities {

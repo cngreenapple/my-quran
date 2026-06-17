@@ -82,7 +82,7 @@ export default function Settings() {
           </h2>
 
           {/* Dark Mode */}
-          <Card className="border-border/60">
+          <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-4">
                 <div
@@ -105,7 +105,7 @@ export default function Settings() {
               </div>
 
               <div
-                className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-border/60"
+                className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-border"
                 role="radiogroup"
                 aria-label="Pilihan tema"
               >
@@ -115,7 +115,7 @@ export default function Settings() {
                     "flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 transition-all text-sm font-medium",
                     theme === "light"
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/40 text-muted-foreground",
+                      : "border-border text-muted-foreground",
                   )}
                   role="radio"
                   aria-checked={theme === "light"}
@@ -129,7 +129,7 @@ export default function Settings() {
                     "flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 transition-all text-sm font-medium",
                     theme === "dark"
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-primary/40 text-muted-foreground",
+                      : "border-border text-muted-foreground",
                   )}
                   role="radio"
                   aria-checked={theme === "dark"}
@@ -151,7 +151,7 @@ export default function Settings() {
             <Eye className="w-3.5 h-3.5" aria-hidden="true" />
             Preferensi Bacaan
           </h2>
-          <Card className="border-border/60">
+          <Card>
             <CardContent className="p-2">
               <button
                 onClick={() =>
@@ -172,7 +172,7 @@ export default function Settings() {
                 <div
                   className={cn(
                     "w-10 h-6 rounded-full p-0.5 transition-colors shrink-0",
-                    settings.showTransliteration ? "bg-primary" : "bg-muted-foreground/30",
+                    settings.showTransliteration ? "bg-primary" : "bg-muted",
                   )}
                   aria-hidden="true"
                 >
@@ -202,7 +202,7 @@ export default function Settings() {
                 <div
                   className={cn(
                     "w-10 h-6 rounded-full p-0.5 transition-colors shrink-0",
-                    settings.showVerseOfTheDay ? "bg-primary" : "bg-muted-foreground/30",
+                    settings.showVerseOfTheDay ? "bg-primary" : "bg-muted",
                   )}
                   aria-hidden="true"
                 >
@@ -227,7 +227,7 @@ export default function Settings() {
             Statistik
           </h2>
           <div className="grid grid-cols-2 gap-3">
-            <Card className="border-border/60">
+            <Card>
               <CardContent className="p-4 text-center">
                 <div
                   className="w-10 h-10 mx-auto rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2"
@@ -241,7 +241,7 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground mt-0.5">Streak Terpanjang (hari)</p>
               </CardContent>
             </Card>
-            <Card className="border-border/60">
+            <Card>
               <CardContent className="p-4 text-center">
                 <div
                   className="w-10 h-10 mx-auto rounded-xl bg-primary/10 flex items-center justify-center mb-2"
@@ -266,7 +266,7 @@ export default function Settings() {
           >
             Data
           </h2>
-          <Card className="border-border/60">
+          <Card>
             <CardContent className="p-2">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -334,7 +334,7 @@ export default function Settings() {
           >
             Tentang
           </h2>
-          <Card className="border-border/60">
+          <Card>
             <CardContent className="p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div
@@ -376,7 +376,7 @@ export default function Settings() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/60 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
                 <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" aria-hidden="true" />
                 <span>Dibuat dengan cinta untuk umat Muslim</span>
               </div>
