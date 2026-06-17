@@ -11,14 +11,15 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-40 w-full border-b border-border bg-background"
+      className="sticky top-0 z-[100] w-full border-b border-border bg-background"
       role="banner"
     >
       <div className="container mx-auto flex h-14 items-center justify-between gap-2 px-3 max-w-5xl">
         <button
           onClick={onMenuClick}
-          className="w-10 h-10 rounded-xl hover:bg-muted flex items-center justify-center transition-colors"
+          className="relative z-[110] w-10 h-10 rounded-xl hover:bg-muted flex items-center justify-center transition-colors"
           aria-label="Buka menu navigasi"
+          type="button"
         >
           <Menu className="w-5 h-5 text-foreground" />
         </button>
