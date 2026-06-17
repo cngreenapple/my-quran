@@ -1,0 +1,163 @@
+import { useMemo } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { CalendarDay } from "@/types/hijri-calendar";
+
+interface HijriCalendarProps {
+  year: number;
+  month: number; // 0-indexed
+  days: CalendarDay[];
+  onPrev: () => void;
+  onNext: () => void;
+}
+
+const MONTH_NAMES = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
+
+const WEEKDAYS_SHORT = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+
+const colorMap = {
+  emerald: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ring-emerald-500/30",
+  amber: "bg-amber-500/15 text-amber-700 dark:text-amber-400 ring-amber-500/30",
+  rose: "bg-rose-500/15 text-rose-700 dark:text-rose-400 ring-rose-500/30",
+  sky: "bg-sky-500/15 text-sky-700 dark:text-sky-400 ring-sky-500/30",
+  violet: "bg-violet-500/15 text-violet-700 dark:text-violet-400 ring-violet-500/30",
+};
+
+export function HijriCalendar({
+  year,
+  month,
+  days,
+  onPrev,
+  onNext,
+}: HijriCalendarProps) {
+  // Build empty cells for start of month
+  const firstDayOfWeek = useMemo(() => {
+    if (days.length === 0) return 0;
+    return new Date(year, month, 1).getDay();
+  }, [year, month, days.length]);
+
+  const cells: (CalendarDay | null)[] = [
+    ...Array.from({ length: firstDayOfWeek }, () => null),
+    ...days,
+  ];
+
+  // Pad to make it 6 weeks (42 cells)
+  while (cells.length < 42) cells.push(null);
+
+  // Determine current Hijri month range for header
+  const currentHijriMonth = days.length > 0 ? days[Math.floor(days.length / 2)]?.hijri.monthName : "";
+  const currentHijriYear = days.length > 0 ? days[Math.floor(days.length / 2)]?.hijri.year : "";
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onPrev}
+          className="rounded-full"
+          aria-label="Bulan sebelumnya"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-foreground">
+            {MONTH_NAMES[month]} {year}
+          </h2>
+          {currentHijriMonth && (
+            <p className="text-xs text-muted-foreground">
+              {currentHijriMonth} {currentHijriYear} H
+            </p>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onNext}
+          className="rounded-full"
+          aria-label="Bulan berikutnya"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Weekday header */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {WEEKDAYS_SHORT.map((wd) => (
+          <div
+            key={wd}
+            className={cn(
+              "text-center text-[10px] font-bold uppercase tracking-wider py-1.5",
+              wd === "Jum" ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+            )}
+          >
+            {wd}
+          </div>
+        ))}
+      </div>
+
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((day, i) => {
+          if (!day) {
+            return <div key={`empty-${i}`} className="aspect-square" />;
+          }
+
+          const isFirstOfHijriMonth = day.hijri.day === 1;
+          const hasHoliday = day.holidays.length > 0;
+          const holidayColor = hasHoliday ? day.holidays[0].color : null;
+
+          return (
+            <div
+              key={day.gregorian.date.toISOString()}
+              className={cn(
+                "relative aspect-square rounded-xl p-1 flex flex-col items-center justify-center transition-all",
+                day.isToday
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 ring-2 ring-primary/40"
+                  : hasHoliday && holidayColor
+                    ? cn(colorMap[holidayColor], "ring-1")
+                    : day.isJumat
+                      ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
+                      : day.isWeekend
+                        ? "bg-muted/40 text-muted-foreground"
+                        : "bg-card border border-border/40",
+              )}
+            >
+              <span
+                className={cn(
+                  "text-sm font-bold leading-none tabular-nums",
+                  day.isToday && "text-base",
+                )}
+              >
+                {day.gregorian.day}
+              </span>
+              <span
+                className={cn(
+                  "text-[9px] leading-none mt-0.5 tabular-nums",
+                  day.isToday
+                    ? "text-primary-foreground/80"
+                    : "text-muted-foreground",
+                )}
+              >
+                {day.hijri.day}
+              </span>
+              {hasHoliday && (
+                <span className="absolute top-0.5 right-0.5 text-[10px] leading-none">
+                  {day.holidays[0].emoji}
+                </span>
+              )}
+              {isFirstOfHijriMonth && !hasHoliday && (
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

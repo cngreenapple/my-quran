@@ -1,6 +1,15 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, BookOpen, Sparkles, Clock, BookHeart, Hand, Star } from "lucide-react";
+import {
+  Search,
+  BookOpen,
+  Sparkles,
+  Clock,
+  BookHeart,
+  Hand,
+  Star,
+  Calendar,
+} from "lucide-react";
 import { Header } from "@/components/Header";
 import { SearchBar } from "@/components/SearchBar";
 import { SurahCard } from "@/components/SurahCard";
@@ -12,6 +21,7 @@ import { useSurahList } from "@/hooks/use-surah-list";
 import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
 import { Card, CardContent } from "@/components/ui/card";
 import { ASMAUL_HUSNA } from "@/data/asmaul-husna";
+import { getTodayInfo, getUpcomingEvents, formatFullDate } from "@/lib/hijri-calendar";
 import { cn } from "@/lib/utils";
 
 export default function Index() {
@@ -19,6 +29,8 @@ export default function Index() {
   const { data, isLoading, isError, refetch } = useSurahList();
   const { totalCompletedToday } = useDzikirCounter();
   const [asmaOfTheDay, setAsmaOfTheDay] = useState(ASMAUL_HUSNA[0]);
+  const [todayInfo, setTodayInfo] = useState(() => getTodayInfo());
+  const [upcoming, setUpcoming] = useState(() => getUpcomingEvents({ daysAhead: 30 }).slice(0, 1));
 
   // Asma of the day: rotate based on day of year
   useEffect(() => {
@@ -28,6 +40,8 @@ export default function Index() {
     const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
     const idx = dayOfYear % ASMAUL_HUSNA.length;
     setAsmaOfTheDay(ASMAUL_HUSNA[idx]);
+    setTodayInfo(getTodayInfo());
+    setUpcoming(getUpcomingEvents({ daysAhead: 30 }).slice(0, 1));
   }, []);
 
   const filteredSurahs = useMemo(() => {
@@ -80,6 +94,15 @@ export default function Index() {
       text: "text-rose-600 dark:text-rose-400",
       badge: null,
     },
+    {
+      to: "/kalender",
+      label: "Kalender",
+      icon: Calendar,
+      color: "from-sky-500 to-sky-700",
+      bg: "bg-sky-50 dark:bg-sky-950/30",
+      text: "text-sky-600 dark:text-sky-400",
+      badge: null,
+    },
   ];
 
   return (
@@ -121,7 +144,7 @@ export default function Index() {
                 Baca Al-Qur'an di Mana Saja
               </h1>
               <p className="text-sm sm:text-base text-emerald-50/90 max-w-md leading-relaxed">
-                114 surah dengan terjemahan, audio murottal, jadwal sholat, dzikir, doa, dan 99 Asmaul Husna.
+                114 surah dengan terjemahan, audio murottal, jadwal sholat, dzikir, doa, Asmaul Husna, dan kalender Hijriah.
               </p>
             </div>
           </div>
@@ -132,7 +155,7 @@ export default function Index() {
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3 px-1">
             Akses Cepat
           </h2>
-          <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          <div className="grid grid-cols-5 gap-2 sm:gap-3">
             {quickActions.map((action) => {
               const Icon = action.icon;
               return (
@@ -141,8 +164,8 @@ export default function Index() {
                   to={action.to}
                   className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-2xl"
                 >
-                  <Card className="border-border/60 hover:border-primary/40 transition-all group-active:scale-[0.97]">
-                    <CardContent className={cn("p-2.5 sm:p-3 text-center relative", action.bg)}>
+                  <Card className="border-border/60 hover:border-primary/40 transition-all group-active:scale-[0.95]">
+                    <CardContent className={cn("p-2 sm:p-3 text-center relative", action.bg)}>
                       {action.badge && (
                         <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
                           {action.badge}
@@ -156,7 +179,7 @@ export default function Index() {
                       >
                         <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                       </div>
-                      <p className={cn("text-[10px] sm:text-xs font-semibold leading-tight", action.text)}>
+                      <p className={cn("text-[9px] sm:text-[11px] font-semibold leading-tight", action.text)}>
                         {action.label}
                       </p>
                     </CardContent>
@@ -165,6 +188,55 @@ export default function Index() {
               );
             })}
           </div>
+        </section>
+
+        {/* Today Widget */}
+        <section className="mb-5">
+          <Link
+            to="/kalender"
+            className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-3xl"
+          >
+            <Card className="overflow-hidden border-sky-500/30 bg-gradient-to-br from-sky-500/10 via-card to-card hover:shadow-lg transition-all group-active:scale-[0.99]">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                    <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                      Hari Ini
+                    </p>
+                  </div>
+                  {upcoming[0] && (
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {upcoming[0].daysUntil === 0
+                        ? `🎉 ${upcoming[0].holiday.name}`
+                        : `${upcoming[0].daysUntil} hari lagi: ${upcoming[0].holiday.name}`}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {todayInfo.gregorian.weekday}
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
+                      {formatFullDate(new Date()).split(", ")[1]}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className="font-arabic text-xl sm:text-2xl text-sky-600 dark:text-sky-400 leading-tight"
+                      dir="rtl"
+                    >
+                      {todayInfo.hijri.monthArabic}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {todayInfo.hijri.day} {todayInfo.hijri.year} H
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </section>
 
         {/* Asmaul Husna of the Day */}

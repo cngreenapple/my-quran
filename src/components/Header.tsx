@@ -1,5 +1,13 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { BookOpen, Home, Settings as SettingsIcon, Clock, BookHeart, Hand } from "lucide-react";
+import {
+  BookOpen,
+  Home,
+  Settings as SettingsIcon,
+  Clock,
+  BookHeart,
+  Hand,
+  Calendar,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
@@ -8,8 +16,12 @@ const navItems = [
   { to: "/jadwal-sholat", label: "Sholat", icon: Clock },
   { to: "/dzikir", label: "Dzikir", icon: BookHeart },
   { to: "/doa", label: "Doa", icon: Hand },
+  { to: "/kalender", label: "Kalender", icon: Calendar },
   { to: "/settings", label: "Setting", icon: SettingsIcon },
 ];
+
+// Mobile shows 5 most-used; Settings is in header (top-right hamburger)
+const mobileNavItems = navItems.slice(0, 5);
 
 export function Header() {
   return (
@@ -59,6 +71,20 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-1">
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                cn(
+                  "lg:hidden w-9 h-9 rounded-full flex items-center justify-center transition-all",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                )
+              }
+              aria-label="Settings"
+            >
+              <SettingsIcon className="w-4 h-4" />
+            </NavLink>
             <ThemeSwitcher />
           </div>
         </div>
@@ -75,7 +101,7 @@ function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl pb-safe">
       <div className="grid grid-cols-5 gap-0.5 p-1.5 max-w-2xl mx-auto">
-        {navItems.map((item) => {
+        {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const isActive =
             item.to === "/"
