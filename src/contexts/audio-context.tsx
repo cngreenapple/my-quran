@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -62,7 +63,21 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity,
   });
 
-  // Initialize audio element once
+  // Refs to access latest state inside stable event handlers
+  const currentSurahRef = useRef<number | null>(currentSurah);
+  const surahListRef = useRef(surahList);
+  const playRef = useRef<((surahNumber: number, surahName: string) => void) | null>(null);
+  const stopRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    currentSurahRef.current = currentSurah;
+  }, [currentSurah]);
+
+  useEffect(() => {
+    surahListRef.current = surahList;
+  }, [surahList]);
+
+  // Initialize audio element ONCE (empty deps) so play() always references the same element
   useEffect(() => {
     const audio = new Audio();
     audio.preload = "metadata";
@@ -86,17 +101,15 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       setError(null);
     };
     const onEnded = () => {
-      setCurrentSurah((prev) => {
-        if (prev && prev < 114) {
-          const next = prev + 1;
-          const nextSurahInfo = surahList?.find((s) => s.nomor === next);
-          const nextName = nextSurahInfo?.namaLatin || `Surah ${next}`;
-          setTimeout(() => play(next, nextName), 0);
-          return prev;
-        }
-        setTimeout(() => stop(), 0);
-        return prev;
-      });
+      const prev = currentSurahRef.current;
+      if (prev && prev < 114) {
+        const next = prev + 1;
+        const nextSurahInfo = surahListRef.current?.find((s) => s.nomor === next);
+        const nextName = nextSurahInfo?.namaLatin || `Surah ${next}`;
+        setTimeout(() => playRef.current?.(next, nextName), 0);
+      } else {
+        setTimeout(() => stopRef.current?.(), 0);
+      }
     };
     const onError = () => {
       const mediaError = audio.error;
@@ -104,7 +117,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         code: mediaError?.code,
         message: mediaError?.message,
         src: audio.src,
-        surah: currentSurah,
+        surah: currentSurahRef.current,
       });
       setIsLoadingAudio(false);
 
@@ -132,14 +145,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     audio.addEventListener("error", onError);
 
     return () => {
-      // Pastikan audio di-pause saat cleanup (route change / unmount)
       audio.pause();
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("durationchange", onDurationChange);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
       audio.load();
     };
-  }, [currentSurah, surahList]);
+  }, []);
 
-  // Stop global saat halaman di-hide / di-close (mobile tab, browser close, dll)
+  // Stop global saat halaman di-hide / di-close
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -296,23 +317,46 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setProgress(audio.currentTime);
   }, []);
 
+  // Keep refs in sync with latest callback implementations (for use in stable event handlers)
+  useEffect(() => {
+    playRef.current = play;
+    stopRef.current = stop;
+  }, [play, stop]);
+
+  // Memoize context value to prevent unnecessary re-renders and effect re-runs
+  const value = useMemo<AudioContextValue>(
+    () => ({
+      currentSurah,
+      currentSurahName,
+      audioUrl,
+      isPlaying,
+      progress,
+      duration,
+      error,
+      isLoadingAudio,
+      play,
+      togglePlay,
+      stop,
+      seek,
+    }),
+    [
+      currentSurah,
+      currentSurahName,
+      audioUrl,
+      isPlaying,
+      progress,
+      duration,
+      error,
+      isLoadingAudio,
+      play,
+      togglePlay,
+      stop,
+      seek,
+    ],
+  );
+
   return (
-    <AudioContext.Provider
-      value={{
-        currentSurah,
-        currentSurahName,
-        audioUrl,
-        isPlaying,
-        progress,
-        duration,
-        error,
-        isLoadingAudio,
-        play,
-        togglePlay,
-        stop,
-        seek,
-      }}
-    >
+    <AudioContext.Provider value={value}>
       {children}
     </AudioContext.Provider>
   );

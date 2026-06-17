@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -111,8 +112,16 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     audio.addEventListener("error", onError);
 
     return () => {
-      // Pastikan audio di-pause saat cleanup (route change / unmount)
       audio.pause();
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("durationchange", onDurationChange);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
       audio.load();
     };
@@ -292,23 +301,40 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     [isCurrentAyat, isLoading],
   );
 
+  // Memoize context value to keep reference stable across renders
+  const value = useMemo<AyatAudioContextValue>(
+    () => ({
+      currentAyat,
+      isPlaying,
+      isLoading,
+      error,
+      progress,
+      duration,
+      playAyat,
+      togglePlay,
+      stop,
+      isCurrentAyat,
+      isAyatPlaying,
+      isAyatLoading,
+    }),
+    [
+      currentAyat,
+      isPlaying,
+      isLoading,
+      error,
+      progress,
+      duration,
+      playAyat,
+      togglePlay,
+      stop,
+      isCurrentAyat,
+      isAyatPlaying,
+      isAyatLoading,
+    ],
+  );
+
   return (
-    <AyatAudioContext.Provider
-      value={{
-        currentAyat,
-        isPlaying,
-        isLoading,
-        error,
-        progress,
-        duration,
-        playAyat,
-        togglePlay,
-        stop,
-        isCurrentAyat,
-        isAyatPlaying,
-        isAyatLoading,
-      }}
-    >
+    <AyatAudioContext.Provider value={value}>
       {children}
     </AyatAudioContext.Provider>
   );
