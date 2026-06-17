@@ -7,7 +7,6 @@ import {
   BookHeart,
   Hand,
   Calendar,
-  Bookmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -18,18 +17,15 @@ const navItems = [
   { to: "/dzikir", label: "Dzikir", icon: BookHeart, ariaLabel: "Dzikir pagi dan petang" },
   { to: "/doa", label: "Doa", icon: Hand, ariaLabel: "Kumpulan doa" },
   { to: "/kalender", label: "Kalender", icon: Calendar, ariaLabel: "Kalender Hijriah" },
-  { to: "/bookmark", label: "Bookmark", icon: Bookmark, ariaLabel: "Ayat-ayat yang di-bookmark" },
   { to: "/settings", label: "Setting", icon: SettingsIcon, ariaLabel: "Pengaturan aplikasi" },
 ];
 
-// Mobile shows 5 most-used; Settings is in header (top-right hamburger)
-// Mobile slot: Beranda, Sholat, Doa, Bookmark, Kalender
+// Mobile shows 4 most-used; Asmaul Husna & Settings accessible dari Index/header
 const mobileNavItems = [
   navItems[0], // Beranda
   navItems[1], // Sholat
+  navItems[2], // Dzikir
   navItems[3], // Doa
-  navItems[5], // Bookmark
-  navItems[4], // Kalender
 ];
 
 export function Header() {
@@ -131,7 +127,7 @@ function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl pb-safe"
       aria-label="Menu navigasi bawah"
     >
-      <div className="grid grid-cols-5 gap-0.5 p-1.5 max-w-2xl mx-auto">
+      <div className="grid grid-cols-4 gap-0.5 p-1.5 max-w-2xl mx-auto">
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const isActive =

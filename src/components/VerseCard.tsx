@@ -2,7 +2,6 @@ import { memo, forwardRef } from "react";
 import { Share2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookmarkButton } from "./BookmarkButton";
 import type { Ayat } from "@/types/quran";
 import { shareVerseNative } from "@/utils/share";
 import { cn } from "@/lib/utils";
@@ -139,11 +138,6 @@ export const VerseCard = memo(
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-1">
-                <BookmarkButton
-                  surahNumber={surahNumber}
-                  surahName={surahName}
-                  ayat={ayat}
-                />
                 <Button
                   variant="ghost"
                   size="sm"

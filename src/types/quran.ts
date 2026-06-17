@@ -29,16 +29,6 @@ export interface SurahDetail extends Surah {
   audioFull: Record<string, string>;
 }
 
-export interface BookmarkItem {
-  id: string;
-  surahNumber: number;
-  surahName: string;
-  ayatNumber: number;
-  teksArab: string;
-  teksIndonesia: string;
-  timestamp: number;
-}
-
 export interface LastRead {
   surahNumber: number;
   surahName: string;

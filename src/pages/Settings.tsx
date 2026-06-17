@@ -3,15 +3,12 @@ import {
   ArrowLeft,
   Moon,
   Sun,
-  Info,
   Heart,
   BookOpen,
-  Bookmark,
   RotateCcw,
   Type,
   Palette,
   Eye,
-  Trash2,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +17,6 @@ import { Header } from "@/components/Header";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useTheme } from "@/hooks/use-theme";
-import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useLastRead } from "@/hooks/use-last-read";
 import { useReadingStats } from "@/hooks/use-reading-stats";
 import { useAppSettings, ACCENT_COLORS } from "@/hooks/use-app-settings";
@@ -43,10 +39,9 @@ export default function Settings() {
   useDocumentTitle("Pengaturan");
 
   const { theme, setTheme } = useTheme();
-  const { bookmarks, clearBookmarks } = useBookmarks();
   const { lastRead, clearLastRead } = useLastRead();
   const { stats, resetStats } = useReadingStats();
-  const { settings, updateSetting, resetSettings } = useAppSettings();
+  const { settings, updateSetting } = useAppSettings();
 
   return (
     <div className="min-h-screen bg-background bg-mesh dark:bg-mesh-dark">
@@ -380,12 +375,12 @@ export default function Settings() {
                   className="w-10 h-10 mx-auto rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-2"
                   aria-hidden="true"
                 >
-                  <Bookmark className="w-5 h-5 text-amber-600 dark:text-amber-400 fill-amber-600/20" />
+                  <BookOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
                 <p className="text-2xl font-bold text-foreground">
-                  {bookmarks.length}
+                  {stats.longestStreak}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Bookmark</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Streak Terpanjang (hari)</p>
               </CardContent>
             </Card>
             <Card className="border-border/60">
@@ -469,48 +464,6 @@ export default function Settings() {
                   </p>
                 </div>
               </button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    disabled={bookmarks.length === 0}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left group"
-                  >
-                    <Bookmark
-                      className="w-5 h-5 text-muted-foreground group-hover:text-destructive shrink-0"
-                      aria-hidden="true"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground group-hover:text-destructive">
-                        Hapus Semua Bookmark
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {bookmarks.length} bookmark tersimpan
-                      </p>
-                    </div>
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-2xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus Semua Bookmark?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Tindakan ini tidak dapat dibatalkan. Semua bookmark Anda akan dihapus permanen.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="rounded-full">Batal</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        clearBookmarks();
-                        showSuccess("Semua bookmark dihapus");
-                      }}
-                      className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Hapus Semua
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </CardContent>
           </Card>
         </section>

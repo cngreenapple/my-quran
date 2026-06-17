@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AudioProvider } from "@/contexts/audio-context";
-import { BookmarkProvider } from "@/hooks/use-bookmarks";
 import { LastReadProvider } from "@/hooks/use-last-read";
 import { DzikirProvider } from "@/hooks/use-dzikir-counter";
 import { ReadingStatsProvider } from "@/hooks/use-reading-stats";
@@ -31,55 +30,51 @@ const Dzikir = lazy(() => import("./pages/Dzikir"));
 const Doa = lazy(() => import("./pages/Doa"));
 const AsmaulHusna = lazy(() => import("./pages/AsmaulHusna"));
 const Kalender = lazy(() => import("./pages/Kalender"));
-const Bookmark = lazy(() => import("./pages/Bookmark"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppSettingsProvider>
       <ReadingStatsProvider>
-        <BookmarkProvider>
-          <LastReadProvider>
-            <DzikirProvider>
-              <AudioProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter
-                    future={{
-                      v7_startTransition: true,
-                      v7_relativeSplatPath: true,
-                    }}
-                  >
-                    <Suspense
-                      fallback={
-                        <div className="min-h-screen bg-background">
-                          <div className="container mx-auto px-4 py-6 max-w-5xl">
-                            <SurahListSkeleton count={6} />
-                          </div>
+        <LastReadProvider>
+          <DzikirProvider>
+            <AudioProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
+                  <Suspense
+                    fallback={
+                      <div className="min-h-screen bg-background">
+                        <div className="container mx-auto px-4 py-6 max-w-5xl">
+                          <SurahListSkeleton count={6} />
                         </div>
-                      }
-                    >
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route path="/surat/:id" element={<SuratDetail />} />
-                        <Route path="/jadwal-sholat" element={<PrayerTimes />} />
-                        <Route path="/dzikir" element={<Dzikir />} />
-                        <Route path="/doa" element={<Doa />} />
-                        <Route path="/asmaul-husna" element={<AsmaulHusna />} />
-                        <Route path="/kalender" element={<Kalender />} />
-                        <Route path="/bookmark" element={<Bookmark />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </Suspense>
-                    <PWAStatusBar />
-                  </BrowserRouter>
-                </TooltipProvider>
-              </AudioProvider>
-            </DzikirProvider>
-          </LastReadProvider>
-        </BookmarkProvider>
+                      </div>
+                    }
+                  >
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/surat/:id" element={<SuratDetail />} />
+                      <Route path="/jadwal-sholat" element={<PrayerTimes />} />
+                      <Route path="/dzikir" element={<Dzikir />} />
+                      <Route path="/doa" element={<Doa />} />
+                      <Route path="/asmaul-husna" element={<AsmaulHusna />} />
+                      <Route path="/kalender" element={<Kalender />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                  <PWAStatusBar />
+                </BrowserRouter>
+              </TooltipProvider>
+            </AudioProvider>
+          </DzikirProvider>
+        </LastReadProvider>
       </ReadingStatsProvider>
     </AppSettingsProvider>
   </QueryClientProvider>
