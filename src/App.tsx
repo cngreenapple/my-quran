@@ -21,7 +21,6 @@ const queryClient = new QueryClient({
 
 const Index = lazy(() => import("./pages/Index"));
 const SuratDetail = lazy(() => import("./pages/SuratDetail"));
-const Bookmark = lazy(() => import("./pages/Bookmark"));
 const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -51,7 +50,6 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/surat/:id" element={<SuratDetail />} />
-                  <Route path="/bookmark" element={<Bookmark />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
