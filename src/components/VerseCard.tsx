@@ -1,5 +1,5 @@
 import { memo, forwardRef, useState } from "react";
-import { Share2, Bookmark, StickyNote } from "lucide-react";
+import { Share2, Bookmark, StickyNote, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Ayat } from "@/types/quran";
@@ -8,6 +8,8 @@ import { showSuccess } from "@/utils/toast";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useNotes } from "@/hooks/use-notes";
 import { AyatNotesDialog } from "@/components/AyatNotesDialog";
+import { AyatAudioButton } from "@/components/AyatAudioButton";
+import { useAudio } from "@/contexts/audio-context";
 import { cn } from "@/lib/utils";
 
 interface VerseCardProps {
@@ -34,11 +36,24 @@ export const VerseCard = memo(
     const tafsirText = ayat.tafsir?.kemenag?.teks;
     const { isBookmarked, toggleBookmark } = useBookmarks();
     const { getNotesForAyat } = useNotes();
+    const { play, currentSurah, togglePlay } = useAudio();
     const [notesDialogOpen, setNotesDialogOpen] = useState(false);
 
     const bookmarked = isBookmarked(surahNumber, ayat.nomorAyat);
     const notesForThisAyat = getNotesForAyat(surahNumber, ayat.nomorAyat);
     const notesCount = notesForThisAyat.length;
+
+    // Check if this surah is currently being played as full surah
+    const isSurahPlaying = currentSurah === surahNumber;
+
+    const handlePlaySurah = () => {
+      if ("vibrate" in navigator) navigator.vibrate(10);
+      if (isSurahPlaying) {
+        togglePlay();
+      } else {
+        play(surahNumber, surahName);
+      }
+    };
 
     const handleShare = async () => {
       await shareVerseNative({
@@ -80,8 +95,8 @@ export const VerseCard = memo(
         >
           <CardContent className="p-5 sm:p-6">
             <div className="flex items-start gap-3 sm:gap-4">
-              {/* Number Badge */}
-              <div className="shrink-0 pt-1">
+              {/* Number Badge with Audio Play Button */}
+              <div className="shrink-0 pt-1 flex flex-col items-center gap-1.5">
                 <div className="relative w-11 h-11 sm:w-12 sm:h-12">
                   <div className="absolute inset-0 rounded-full border-2 border-primary/30 group-hover:border-primary/50 transition-colors" />
                   <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
@@ -90,6 +105,12 @@ export const VerseCard = memo(
                     </span>
                   </div>
                 </div>
+                {/* Per-ayat audio button */}
+                <AyatAudioButton
+                  surahNumber={surahNumber}
+                  ayatNumber={ayat.nomorAyat}
+                  size="sm"
+                />
               </div>
 
               {/* Content */}
@@ -142,6 +163,31 @@ export const VerseCard = memo(
 
                 {/* Actions */}
                 <div className="flex items-center gap-1.5 pt-1 flex-wrap">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handlePlaySurah}
+                    type="button"
+                    className={cn(
+                      "gap-1.5 rounded-full transition-colors",
+                      isSurahPlaying
+                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-label={isSurahPlaying ? `Jeda surah ${surahName}` : `Putar surah ${surahName} full`}
+                    aria-pressed={isSurahPlaying}
+                  >
+                    <Play
+                      className={cn(
+                        "w-4 h-4",
+                        isSurahPlaying ? "fill-current animate-pulse" : "fill-current",
+                      )}
+                    />
+                    <span className="text-xs font-medium">
+                      {isSurahPlaying ? "Jeda Surah" : "Putar Surah"}
+                    </span>
+                  </Button>
+
                   <Button
                     variant="ghost"
                     size="sm"

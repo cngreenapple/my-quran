@@ -60,6 +60,33 @@ export function getAudioSources(nomor: number): { src: string; type: string }[] 
   }));
 }
 
+// Audio per ayat (per verse) - setiap ayat punya file audio terpisah
+// Format: 6-digit padded (001001, 001002, ..., 114006)
+const pad6 = (surah: number, ayat: number) =>
+  `${pad3(surah)}${ayat.toString().padStart(3, "0")}`;
+
+const AYAT_AUDIO_CDNS = [
+  // Primary - everyayah.com (per-ayat files)
+  (surah: number, ayat: number) => `https://everyayah.com/data/Alafasy_128kbps/${pad6(surah, ayat)}.mp3`,
+  // Fallback 1 - Islamic Network per-verse
+  (surah: number, ayat: number) => `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${pad6(surah, ayat)}.mp3`,
+  // Fallback 2 - QuranicAudio.com (per-verse)
+  (surah: number, ayat: number) => `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${pad6(surah, ayat)}.mp3`,
+];
+
+// Returns primary per-ayat audio URL
+export function getAyatAudioUrl(surah: number, ayat: number): string {
+  return AYAT_AUDIO_CDNS[0](surah, ayat);
+}
+
+// Returns all fallback URLs for per-ayat audio
+export function getAyatAudioSources(surah: number, ayat: number): { src: string; type: string }[] {
+  return AYAT_AUDIO_CDNS.map((fn) => ({
+    src: fn(surah, ayat),
+    type: "audio/mpeg",
+  }));
+}
+
 // Pre-flight check: verify URL returns valid audio (HEAD request)
 export async function checkAudioUrl(url: string, timeoutMs = 5000): Promise<boolean> {
   const controller = new AbortController();
@@ -93,6 +120,20 @@ export async function findWorkingAudioUrl(nomor: number): Promise<string | null>
   // If all HEAD checks fail, return primary anyway (CDN might not support HEAD)
   console.warn(`[Audio] All CDN HEAD checks failed, falling back to primary URL`);
   return AUDIO_CDNS[0](nomor);
+}
+
+// Test all per-ayat CDNs and return first working URL
+export async function findWorkingAyatAudioUrl(surah: number, ayat: number): Promise<string | null> {
+  for (const fn of AYAT_AUDIO_CDNS) {
+    const url = fn(surah, ayat);
+    const works = await checkAudioUrl(url);
+    if (works) {
+      console.log(`[Audio] Found working per-ayat CDN: ${url}`);
+      return url;
+    }
+  }
+  console.warn(`[Audio] All per-ayat CDN HEAD checks failed, falling back to primary URL`);
+  return AYAT_AUDIO_CDNS[0](surah, ayat);
 }
 
 export function formatDuration(seconds: number): string {

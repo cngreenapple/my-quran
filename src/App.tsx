@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AudioProvider } from "@/contexts/audio-context";
+import { AyatAudioProvider } from "@/contexts/ayat-audio-context";
 import { LastReadProvider } from "@/hooks/use-last-read";
 import { DzikirProvider } from "@/hooks/use-dzikir-counter";
 import { ReadingStatsProvider } from "@/hooks/use-reading-stats";
@@ -131,18 +132,20 @@ const App = () => (
             <NotesProvider>
               <DzikirProvider>
                 <AudioProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter
-                      future={{
-                        v7_startTransition: true,
-                        v7_relativeSplatPath: true,
-                      }}
-                    >
-                      <AppShell />
-                    </BrowserRouter>
-                  </TooltipProvider>
+                  <AyatAudioProvider>
+                    <TooltipProvider>
+                      <Toaster />
+                      <Sonner />
+                      <BrowserRouter
+                        future={{
+                          v7_startTransition: true,
+                          v7_relativeSplatPath: true,
+                        }}
+                      >
+                        <AppShell />
+                      </BrowserRouter>
+                    </TooltipProvider>
+                  </AyatAudioProvider>
                 </AudioProvider>
               </DzikirProvider>
             </NotesProvider>
