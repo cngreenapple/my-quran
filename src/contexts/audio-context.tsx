@@ -132,20 +132,39 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     audio.addEventListener("error", onError);
 
     return () => {
+      // Pastikan audio di-pause saat cleanup (route change / unmount)
       audio.pause();
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("durationchange", onDurationChange);
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      audio.removeEventListener("waiting", onWaiting);
-      audio.removeEventListener("canplay", onCanPlay);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
       audio.load();
     };
   }, [currentSurah, surahList]);
+
+  // Stop global saat halaman di-hide / di-close (mobile tab, browser close, dll)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const audio = audioRef.current;
+        if (audio && !audio.paused) {
+          audio.pause();
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      const audio = audioRef.current;
+      if (audio && !audio.paused) {
+        audio.pause();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   // Subscribe to coordination events - pause when ayat audio starts
   useEffect(() => {
@@ -228,6 +247,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
 
     if (audio.paused) {
+      // Saat resume, broadcast stop ke ayat (sama seperti play surah baru)
+      if (currentSurah !== null) {
+        broadcastStop("surah", `${currentSurah}`);
+      }
       const token = ++playTokenRef.current;
       const safePlay = async () => {
         try {
@@ -246,7 +269,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     } else {
       audio.pause();
     }
-  }, []);
+  }, [currentSurah]);
 
   const stop = useCallback(() => {
     const audio = audioRef.current;

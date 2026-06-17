@@ -1,11 +1,11 @@
-import { useState, Suspense, lazy } from "react";
+import { useState, Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AudioProvider } from "@/contexts/audio-context";
-import { AyatAudioProvider } from "@/contexts/ayat-audio-context";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AudioProvider, useAudio } from "@/contexts/audio-context";
+import { AyatAudioProvider, useAyatAudio } from "@/contexts/ayat-audio-context";
 import { LastReadProvider } from "@/hooks/use-last-read";
 import { DzikirProvider } from "@/hooks/use-dzikir-counter";
 import { ReadingStatsProvider } from "@/hooks/use-reading-stats";
@@ -41,12 +41,31 @@ const LiveMakkahPage = lazy(() => import("./pages/LiveMakkahPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+/**
+ * Komponen yang listen route change dan stop semua audio.
+ * Harus di dalam BrowserRouter agar bisa pakai useLocation.
+ */
+function RouteAudioStopper() {
+  const location = useLocation();
+  const surahAudio = useAudio();
+  const ayatAudio = useAyatAudio();
+
+  useEffect(() => {
+    // Setiap kali route berubah, stop kedua audio
+    surahAudio.stop();
+    ayatAudio.stop();
+  }, [location.pathname, surahAudio, ayatAudio]);
+
+  return null;
+}
+
 function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <>
       <AppDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
+      <RouteAudioStopper />
       <Suspense
         fallback={
           <div className="min-h-screen bg-background">

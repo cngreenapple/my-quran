@@ -111,18 +111,37 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     audio.addEventListener("error", onError);
 
     return () => {
+      // Pastikan audio di-pause saat cleanup (route change / unmount)
       audio.pause();
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
-      audio.removeEventListener("durationchange", onDurationChange);
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      audio.removeEventListener("waiting", onWaiting);
-      audio.removeEventListener("canplay", onCanPlay);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
       audio.load();
+    };
+  }, []);
+
+  // Stop global saat halaman di-hide / di-close
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        const audio = audioRef.current;
+        if (audio && !audio.paused) {
+          audio.pause();
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      const audio = audioRef.current;
+      if (audio && !audio.paused) {
+        audio.pause();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
@@ -205,6 +224,10 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
 
     if (audio.paused) {
+      // Saat resume, broadcast stop ke surah (sama seperti playAyat baru)
+      if (currentAyat) {
+        broadcastStop("ayat", `${currentAyat.surahNumber}:${currentAyat.ayatNumber}`);
+      }
       const token = ++playTokenRef.current;
       const safePlay = async () => {
         try {
@@ -223,7 +246,7 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     } else {
       audio.pause();
     }
-  }, []);
+  }, [currentAyat]);
 
   const stop = useCallback(() => {
     const audio = audioRef.current;
