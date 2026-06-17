@@ -58,7 +58,7 @@ export default function AsmaulHusna() {
   };
 
   return (
-    <div className="min-h-screen bg-background bg-mesh dark:bg-mesh-dark">
+    <div className="min-h-dvh bg-background bg-mesh dark:bg-mesh-dark">
       <Header />
 
       <main

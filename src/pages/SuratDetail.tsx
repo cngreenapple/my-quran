@@ -110,7 +110,7 @@ export default function SuratDetail() {
 
   if (!isValidNomor) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <main className="container mx-auto px-4 py-6 max-w-3xl">
           <Button variant="ghost" asChild className="mb-4 -ml-2">
@@ -131,7 +131,7 @@ export default function SuratDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <main className="container mx-auto px-4 py-6 max-w-3xl">
           <SurahDetailSkeleton />
@@ -142,7 +142,7 @@ export default function SuratDetail() {
 
   if (isError || !data) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <main className="container mx-auto px-4 py-6 max-w-3xl">
           <Button variant="ghost" asChild className="mb-4 -ml-2">
@@ -163,7 +163,7 @@ export default function SuratDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background bg-mesh dark:bg-mesh-dark">
+    <div className="min-h-dvh bg-background bg-mesh dark:bg-mesh-dark">
       <Header />
 
       <main

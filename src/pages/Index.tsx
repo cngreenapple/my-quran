@@ -113,7 +113,7 @@ export default function Index() {
   ];
 
   return (
-    <div className="min-h-screen bg-background bg-mesh dark:bg-mesh-dark">
+    <div className="min-h-dvh bg-background bg-mesh dark:bg-mesh-dark">
       {/* Skip to content link for keyboard users */}
       <a
         href="#main-content"

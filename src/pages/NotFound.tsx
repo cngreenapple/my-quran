@@ -7,7 +7,7 @@ const NotFound = () => {
   useDocumentTitle("Halaman Tidak Ditemukan");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background bg-mesh dark:bg-mesh-dark p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background bg-mesh dark:bg-mesh-dark p-4">
       <main
         className="text-center max-w-md"
         aria-labelledby="notfound-title"
