@@ -1,12 +1,14 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { BookOpen, Home, Settings as SettingsIcon, Clock } from "lucide-react";
+import { BookOpen, Home, Settings as SettingsIcon, Clock, BookHeart, Hand } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
 const navItems = [
   { to: "/", label: "Beranda", icon: Home },
   { to: "/jadwal-sholat", label: "Sholat", icon: Clock },
-  { to: "/settings", label: "Pengaturan", icon: SettingsIcon },
+  { to: "/dzikir", label: "Dzikir", icon: BookHeart },
+  { to: "/doa", label: "Doa", icon: Hand },
+  { to: "/settings", label: "Setting", icon: SettingsIcon },
 ];
 
 export function Header() {
@@ -31,7 +33,8 @@ export function Header() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Nav - scrollable on smaller screens */}
+          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto no-scrollbar">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -41,7 +44,7 @@ export function Header() {
                   end={item.to === "/"}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                      "flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap",
                       isActive
                         ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -71,7 +74,7 @@ function BottomNav() {
   const location = useLocation();
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl pb-safe">
-      <div className="grid grid-cols-3 gap-1 p-2 max-w-md mx-auto">
+      <div className="grid grid-cols-5 gap-0.5 p-1.5 max-w-2xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -84,7 +87,7 @@ function BottomNav() {
               to={item.to}
               end={item.to === "/"}
               className={cn(
-                "flex flex-col items-center gap-1 py-2 rounded-2xl transition-all duration-200",
+                "flex flex-col items-center gap-0.5 py-1.5 rounded-2xl transition-all duration-200",
                 isActive
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground active:scale-95",
@@ -92,14 +95,14 @@ function BottomNav() {
             >
               <Icon
                 className={cn(
-                  "h-5 w-5 transition-transform",
+                  "h-4 w-4 transition-transform",
                   isActive && "scale-110",
                 )}
                 strokeWidth={isActive ? 2.5 : 2}
               />
               <span
                 className={cn(
-                  "text-[10px] font-semibold tracking-wide",
+                  "text-[9px] font-semibold tracking-wide leading-tight",
                   isActive && "font-bold",
                 )}
               >

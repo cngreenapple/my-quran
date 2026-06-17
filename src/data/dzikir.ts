@@ -1,0 +1,163 @@
+import type { DzikirCategory } from "@/types/dzikir";
+
+export const DZIKIR_PAGI: DzikirCategory = {
+  id: "pagi",
+  name: "Dzikir Pagi",
+  description: "Dibaca setelah Subuh untuk memulai hari dengan keberkahan",
+  emoji: "🌅",
+  color: "emerald",
+  items: [
+    {
+      id: "pagi-1",
+      arabic: "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ",
+      latin: "Ashbaḥnā wa ashbaḥal-mulku lillāh, wal-ḥamdu lillāh, lā ilāha illallāhu waḥdahu lā syarīka lah",
+      translation: "Kami telah memasuki waktu pagi dan kerajaan milik Allah, segala puji bagi Allah, tidak ada tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya.",
+      count: 1,
+      fawaid: "Barangsiapa membaca ini di pagi hari, maka ia telah mengucapkan dzikir pagi dan petang dengan sempurna.",
+      source: "HR. Muslim",
+    },
+    {
+      id: "pagi-2",
+      arabic: "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ",
+      latin: "Allāhumma bika ashbaḥnā, wa bika amsaynā, wa bika naḥyā, wa bika namūtu, wa ilaikan-nusyūr",
+      translation: "Ya Allah, dengan-Mu kami memasuki pagi, dengan-Mu kami memasuki sore, dengan-Mu kami hidup, dengan-Mu kami mati, dan kepada-Mu kebangkitan.",
+      count: 1,
+      source: "HR. Tirmidzi",
+    },
+    {
+      id: "pagi-3",
+      arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+      latin: "Subḥānallāhi wa biḥamdih",
+      translation: "Maha Suci Allah dan segala puji bagi-Nya.",
+      count: 100,
+      fawaid: "Tidak ada yang dapat membawanya pada hari Kiamat melainkan dengan membawa pahala seperti memerdekakan 10 budak, dan dicatat baginya 100 kebaikan, dihapus 100 keburukan, dan menjadi pelindung dari setan pada hari itu hingga sore.",
+      source: "HR. Bukhari & Muslim",
+    },
+    {
+      id: "pagi-4",
+      arabic: "لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+      latin: "Lā ilāha illallāhu waḥdahu lā syarīka lah, lahul-mulku wa lahul-ḥamd, wa huwa 'alā kulli syay'in qadīr",
+      translation: "Tidak ada tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya, milik-Nya kerajaan dan segala pujian, dan Dia Maha Kuasa atas segala sesuatu.",
+      count: 10,
+      fawaid: "Seperti memerdekakan 4 budak dari keturunan Ismail, dan Allah akan menulis 10 kebaikan baginya, menghapus 10 keburukan, mengangkat 10 derajat, dan ia akan dilindungi dari setan.",
+      source: "HR. An-Nasa'i",
+    },
+    {
+      id: "pagi-5",
+      arabic: "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
+      latin: "Astaghfirullāha wa atūbu ilaih",
+      translation: "Aku memohon ampunan kepada Allah dan bertobat kepada-Nya.",
+      count: 100,
+      fawaid: "Hamba yang paling disukai Allah adalah yang paling banyak bertobat.",
+      source: "HR. Bukhari",
+    },
+    {
+      id: "pagi-6",
+      arabic: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+      latin: "Allāhumma shalli wa sallim 'alā nabiyyinā Muḥammad",
+      translation: "Ya Allah, berikanlah shalawat dan salam kepada Nabi kami Muhammad.",
+      count: 10,
+      fawaid: "Barangsiapa bershalawat kepadaku 10 kali di pagi hari, maka ia akan mendapatkan syafaatku di hari Kiamat.",
+      source: "HR. Ath-Thabrani",
+    },
+    {
+      id: "pagi-7",
+      arabic: "حَسْبِيَ اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ، عَلَيْهِ تَوَكَّلْتُ، وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
+      latin: "Ḥasbiyallāhu lā ilāha illā huwa, 'alayhi tawakkaltu, wa huwa rabbul-'arsyil-'aẓīm",
+      translation: "Cukup Allah bagiku, tidak ada tuhan selain Dia, kepada-Nya aku bertawakal, dan Dia adalah Tuhan Arasy yang agung.",
+      count: 7,
+      fawaid: "Allah akan mencukupkan segala urusannya dari segala yang membuatnya khawatir, baik urusan dunia maupun akhirat.",
+      source: "HR. Abu Dawud",
+    },
+    {
+      id: "pagi-8",
+      arabic: "بِسْمِ اللَّهِ الَّذِي لاَ يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الأَرْضِ وَلاَ فِي السَّمَاءِ، وَهُوَ السَّمِيعُ الْعَلِيمُ",
+      latin: "Bismillāhilladhī lā yaḍurru ma'asmihī syay'un fil-arḍi wa lā fis-samā', wa huwas-samī'ul-'alīm",
+      translation: "Dengan nama Allah yang dengan nama-Nya tidak ada sesuatu di bumi maupun di langit yang dapat memberi bahaya, dan Dia Maha Mendengar lagi Maha Mengetahui.",
+      count: 3,
+      fawaid: "Tidak ada yang akan membahayakannya sesuatu dari Allah yang datang kepadanya (penyakit, sihir, dll).",
+      source: "HR. Abu Dawud & Tirmidzi",
+    },
+  ],
+};
+
+export const DZIKIR_PETANG: DzikirCategory = {
+  id: "petang",
+  name: "Dzikir Petang",
+  description: "Dibaca setelah Ashar untuk mengakhiri hari dengan ketaatan",
+  emoji: "🌇",
+  color: "amber",
+  items: [
+    {
+      id: "petang-1",
+      arabic: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ",
+      latin: "Amsaynā wa amsal-mulku lillāh, wal-ḥamdu lillāh, lā ilāha illallāhu waḥdahu lā syarīka lah",
+      translation: "Kami telah memasuki waktu sore dan kerajaan milik Allah, segala puji bagi Allah, tidak ada tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya.",
+      count: 1,
+      source: "HR. Muslim",
+    },
+    {
+      id: "petang-2",
+      arabic: "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ",
+      latin: "Allāhumma bika amsaynā, wa bika ashbaḥnā, wa bika naḥyā, wa bika namūtu, wa ilaikal-maṣīr",
+      translation: "Ya Allah, dengan-Mu kami memasuki sore, dengan-Mu kami memasuki pagi, dengan-Mu kami hidup, dengan-Mu kami mati, dan kepada-Mu tempat kembali.",
+      count: 1,
+      source: "HR. Tirmidzi",
+    },
+    {
+      id: "petang-3",
+      arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+      latin: "Subḥānallāhi wa biḥamdih",
+      translation: "Maha Suci Allah dan segala puji bagi-Nya.",
+      count: 100,
+      fawaid: "Diampuni dosanya meskipun sebanyak buih di lautan.",
+      source: "HR. Bukhari & Muslim",
+    },
+    {
+      id: "petang-4",
+      arabic: "لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+      latin: "Lā ilāha illallāhu waḥdahu lā syarīka lah, lahul-mulku wa lahul-ḥamd, wa huwa 'alā kulli syay'in qadīr",
+      translation: "Tidak ada tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya, milik-Nya kerajaan dan segala pujian, dan Dia Maha Kuasa atas segala sesuatu.",
+      count: 10,
+      source: "HR. An-Nasa'i",
+    },
+    {
+      id: "petang-5",
+      arabic: "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
+      latin: "Astaghfirullāha wa atūbu ilaih",
+      translation: "Aku memohon ampunan kepada Allah dan bertobat kepada-Nya.",
+      count: 100,
+      source: "HR. Bukhari",
+    },
+    {
+      id: "petang-6",
+      arabic: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+      latin: "Allāhumma shalli wa sallim 'alā nabiyyinā Muḥammad",
+      translation: "Ya Allah, berikanlah shalawat dan salam kepada Nabi kami Muhammad.",
+      count: 10,
+      source: "HR. Ath-Thabrani",
+    },
+    {
+      id: "petang-7",
+      arabic: "حَسْبِيَ اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ، عَلَيْهِ تَوَكَّلْتُ، وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
+      latin: "Ḥasbiyallāhu lā ilāha illā huwa, 'alayhi tawakkaltu, wa huwa rabbul-'arsyil-'aẓīm",
+      translation: "Cukup Allah bagiku, tidak ada tuhan selain Dia, kepada-Nya aku bertawakal, dan Dia adalah Tuhan Arasy yang agung.",
+      count: 7,
+      source: "HR. Abu Dawud",
+    },
+    {
+      id: "petang-8",
+      arabic: "بِسْمِ اللَّهِ الَّذِي لاَ يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الأَرْضِ وَلاَ فِي السَّمَاءِ، وَهُوَ السَّمِيعُ الْعَلِيمُ",
+      latin: "Bismillāhilladhī lā yaḍurru ma'asmihī syay'un fil-arḍi wa lā fis-samā', wa huwa samī'ul-'alīm",
+      translation: "Dengan nama Allah yang dengan nama-Nya tidak ada sesuatu di bumi maupun di langit yang dapat memberi bahaya, dan Dia Maha Mendengar lagi Maha Mengetahui.",
+      count: 3,
+      source: "HR. Abu Dawud & Tirmidzi",
+    },
+  ],
+};
+
+export const DZIKIR_CATEGORIES: DzikirCategory[] = [DZIKIR_PAGI, DZIKIR_PETANG];
+
+export function getDzikirCategory(id: string): DzikirCategory | undefined {
+  return DZIKIR_CATEGORIES.find((c) => c.id === id);
+}
