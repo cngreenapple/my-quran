@@ -17,11 +17,8 @@ class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log to console in dev; could integrate with Sentry/LogRocket in prod
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
     this.setState({ errorInfo });
-
-    // Optional: report to analytics
     if (typeof window !== "undefined" && (window as any).gtag) {
       try {
         (window as any).gtag("event", "exception", {
@@ -38,7 +35,6 @@ class ErrorBoundary extends Component<
 
   handleReset = () => {
     try {
-      // Clear all app data to recover from corrupted state
       const keys = Object.keys(localStorage);
       keys.forEach((k) => {
         if (k.startsWith("quran-")) localStorage.removeItem(k);
@@ -98,32 +94,10 @@ class ErrorBoundary extends Component<
             </pre>
           </details>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "center" }}>
-            <button
-              onClick={this.handleReload}
-              style={{
-                padding: "0.5rem 1.5rem",
-                background: "#047857",
-                color: "white",
-                border: "none",
-                borderRadius: "9999px",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
+            <button onClick={this.handleReload} style={{ padding: "0.5rem 1.5rem", background: "#047857", color: "white", border: "none", borderRadius: "9999px", cursor: "pointer", fontWeight: 600 }}>
               Refresh Halaman
             </button>
-            <button
-              onClick={this.handleReset}
-              style={{
-                padding: "0.5rem 1.5rem",
-                background: "transparent",
-                color: "#dc2626",
-                border: "1px solid #dc2626",
-                borderRadius: "9999px",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
+            <button onClick={this.handleReset} style={{ padding: "0.5rem 1.5rem", background: "transparent", color: "#dc2626", border: "1px solid #dc2626", borderRadius: "9999px", cursor: "pointer", fontWeight: 600 }}>
               Reset & Refresh
             </button>
           </div>
@@ -140,22 +114,3 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </ErrorBoundary>,
 );
-
-// PWA: Register service worker
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js", { scope: "/" })
-      .then((registration) => {
-        console.log("[PWA] Service Worker registered:", registration.scope);
-
-        // Check for updates periodically
-        setInterval(() => {
-          registration.update();
-        }, 60 * 60 * 1000); // Check every hour
-      })
-      .catch((err) => {
-        console.warn("[PWA] Service Worker registration failed:", err);
-      });
-  });
-}

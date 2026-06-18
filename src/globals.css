@@ -6,34 +6,24 @@
   :root {
     --background: 60 20% 98%;
     --foreground: 160 30% 8%;
-
     --card: 0 0% 100%;
     --card-foreground: 160 30% 8%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 160 30% 8%;
-
     --primary: 160 84% 25%;
     --primary-foreground: 60 20% 98%;
-
     --secondary: 152 30% 94%;
     --secondary-foreground: 160 84% 25%;
-
     --muted: 60 10% 95%;
     --muted-foreground: 158 12% 40%;
-
     --accent: 38 92% 50%;
     --accent-foreground: 160 30% 8%;
-
     --destructive: 0 72% 50%;
     --destructive-foreground: 60 20% 98%;
-
     --border: 152 20% 88%;
     --input: 152 20% 88%;
     --ring: 160 84% 30%;
-
     --radius: 1rem;
-
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -47,28 +37,20 @@
   .dark {
     --background: 160 30% 5%;
     --foreground: 60 15% 96%;
-
     --card: 160 25% 8%;
     --card-foreground: 60 15% 96%;
-
     --popover: 160 25% 8%;
     --popover-foreground: 60 15% 96%;
-
     --primary: 158 75% 45%;
     --primary-foreground: 160 30% 5%;
-
     --secondary: 160 25% 14%;
     --secondary-foreground: 60 15% 96%;
-
     --muted: 160 20% 12%;
     --muted-foreground: 158 12% 65%;
-
     --accent: 38 92% 55%;
     --accent-foreground: 160 30% 5%;
-
     --destructive: 0 70% 45%;
     --destructive-foreground: 60 15% 96%;
-
     --border: 160 20% 18%;
     --input: 160 20% 18%;
     --ring: 158 75% 50%;
@@ -84,104 +66,34 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-
-  html {
-    -webkit-tap-highlight-color: transparent;
-  }
-
+  * { @apply border-border; }
+  html { -webkit-tap-highlight-color: transparent; }
   body {
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
-    /* Bikin stacking context baru di body, sehingga z-index children
-       (Header, Toaster, dll) di-scope ke body. Header z-1000 (via Portal)
-       PASTI di atas Toaster z-100. */
     isolation: isolate;
   }
-
-  /* Arabic text styling — fallback ke system Arabic fonts (iOS, Android, Windows,
-     macOS semua punya Arabic system fonts), akhirnya serif generic */
   .font-arabic {
     font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', 'Arabic Typesetting', 'Geeza Pro', 'Times New Roman', serif;
     line-height: 2.4;
     letter-spacing: 0;
   }
-
-  /* Hide scrollbar but allow scroll */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  /* Smooth scroll */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Bottom safe area for mobile */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  html { scroll-behavior: smooth; }
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .pb-safe {
-      padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
-    }
+    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem); }
   }
 }
 
-/* =============================================
-   CRITICAL FIX: Layered elements blocking header clicks
-   =============================================
-   Root cause analysis:
-   - shadcn Toaster renders <ToastViewport> with position: fixed, top: 0,
-     z-100, w-full, padding 16px. Even when empty, this element occupies
-     ~64px at the top of the viewport and blocks pointer events to the
-     header menu button.
-   - Sonner (used for showSuccess/showError) has z-index 999999.
-   - PWA offline indicator has z-[60] at top: 0.
-
-   Solution: Force pointer-events: none on these "invisible" containers
-   while keeping their children (actual toasts) clickable. */
-
-/* ToastViewport (shadcn) - parent no pointer events, children yes */
-ol[data-radix-toast-viewport] {
-  pointer-events: none !important;
-}
-ol[data-radix-toast-viewport] > * {
-  pointer-events: auto !important;
-}
-
-/* Sonner container */
-section[data-sonner-toaster] {
-  pointer-events: none !important;
-}
-section[data-sonner-toaster] > * {
-  pointer-events: auto !important;
-}
-
-/* =============================================
-   PWA offline mode: push Header down
-   =============================================
-   Saat user offline, offline indicator (40px) muncul di top dengan z-[1100].
-   Header (sticky top-0) default ada di z-1000 di belakang indicator.
-   
-   Solusi: set data-offline="true" di <html> saat offline, lalu CSS rule
-   ini push Header ke top: 40px supaya menu icon tetap clickable.
-   
-   Header di-render via Portal ke document.body, tapi Portal tidak membuat
-   stacking context baru — element tetap di body, jadi `html header` bisa
-   match via descendant selector.
-*/
-html[data-offline="true"] header {
-  top: 40px !important;
-}
+/* Toast viewport tidak block klik header */
+ol[data-radix-toast-viewport] { pointer-events: none !important; }
+ol[data-radix-toast-viewport] > * { pointer-events: auto !important; }
+section[data-sonner-toaster] { pointer-events: none !important; }
+section[data-sonner-toaster] > * { pointer-events: auto !important; }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
 }

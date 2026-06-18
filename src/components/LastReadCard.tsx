@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-import { Play, BookOpen, X } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Play, BookOpen } from "lucide-react";
 import { useLastRead } from "@/hooks/use-last-read";
 import { useSurahList } from "@/hooks/use-surah-list";
 import { showSuccess } from "@/utils/toast";
@@ -10,7 +8,20 @@ export function LastReadCard() {
   const { lastRead, clearLastRead } = useLastRead();
   const { data: surahList } = useSurahList();
 
-  if (!lastRead) return null;
+  if (!lastRead) {
+    return (
+      <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-dashed border-border/60 bg-muted/20 text-muted-foreground">
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0" aria-hidden="true">
+          <BookOpen className="w-4 h-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Terakhir Dibaca</p>
+          <p className="text-xs">Belum ada — mulai baca dari surat pertama</p>
+        </div>
+      </div>
+    );
+  }
+
   const surah = surahList?.find((s) => s.nomor === lastRead.surahNumber);
   if (!surah) return null;
 
@@ -18,55 +29,34 @@ export function LastReadCard() {
     e.preventDefault();
     e.stopPropagation();
     clearLastRead();
-    showSuccess("Riwayat terakhir dibaca dihapus");
+    showSuccess("Riwayat dihapus");
   };
 
   return (
     <Link
       to={`/surat/${lastRead.surahNumber}`}
-      className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-3xl"
+      className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-2xl"
     >
-      <Card className="overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 group-active:scale-[0.99]">
-        <CardContent className="p-5 relative">
-          <button
-            onClick={handleClear}
-            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-background/60 hover:bg-background flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Hapus riwayat"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-              <BookOpen className="w-3 h-3 text-primary" />
-            </div>
-            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-              Terakhir Dibaca
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 pr-6">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-lg text-foreground truncate group-hover:text-primary transition-colors">
-                {surah.namaLatin}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Ayat {lastRead.ayatNumber} • {surah.arti}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              className="shrink-0 rounded-full gap-1.5 shadow-md shadow-primary/20"
-              asChild
-            >
-              <span>
-                <Play className="w-3.5 h-3.5 fill-current" />
-                Lanjutkan
-              </span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-2.5 p-2.5 pr-2 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent hover:border-primary/50 transition-all active:scale-[0.99]">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-sm shadow-emerald-500/30 shrink-0" aria-hidden="true">
+          <Play className="w-4 h-4 fill-current" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[9px] font-bold text-primary uppercase tracking-wider leading-none mb-0.5">
+            Lanjutkan
+          </p>
+          <p className="text-sm font-bold text-foreground truncate leading-tight">
+            {surah.namaLatin} <span className="text-muted-foreground font-normal">• Ayat {lastRead.ayatNumber}</span>
+          </p>
+        </div>
+        <button
+          onClick={handleClear}
+          className="text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-background/50"
+          aria-label="Hapus riwayat"
+        >
+          Hapus
+        </button>
+      </div>
     </Link>
   );
 }
