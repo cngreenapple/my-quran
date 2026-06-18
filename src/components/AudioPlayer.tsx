@@ -36,6 +36,16 @@ export function AudioPlayer() {
     seek(percentage * duration);
   };
 
+  const handleSeekKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      seek(Math.max(0, progress - 5));
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      seek(Math.min(duration, progress + 5));
+    }
+  };
+
   const handleNext = () => {
     if (nextSurah) {
       play(nextSurah.nomor, nextSurah.namaLatin);
@@ -100,6 +110,14 @@ export function AudioPlayer() {
                 <div
                   className="relative h-1 bg-muted rounded-full cursor-pointer group/progress"
                   onClick={handleSeekClick}
+                  onKeyDown={handleSeekKey}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label="Audio progress"
+                  aria-valuenow={Math.round(progressPercent)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuetext={`${formatDuration(progress)} dari ${formatDuration(duration)}`}
                 >
                   <div
                     className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-all"

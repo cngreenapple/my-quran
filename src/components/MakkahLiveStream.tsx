@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Video, Tv, ExternalLink, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,22 @@ interface MakkahLiveStreamProps {
 function MakkahLiveStream({ stream, active }: MakkahLiveStreamProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  // Reset state when stream changes
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+  }, [stream.id]);
+
+  // Timeout fallback: kalau iframe tidak load dalam 10s, anggap gagal
+  useEffect(() => {
+    if (!active || !loading) return;
+    const timer = setTimeout(() => {
+      setLoading(false);
+      setError(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [active, loading, stream.id]);
 
   if (!active) return null;
 

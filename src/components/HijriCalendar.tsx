@@ -56,9 +56,38 @@ export function HijriCalendar({
   // Pad to make it 6 weeks (42 cells)
   while (cells.length < 42) cells.push(null);
 
-  // Determine current Hijri month range for header
-  const currentHijriMonth = days.length > 0 ? days[Math.floor(days.length / 2)]?.hijri.monthName : "";
-  const currentHijriYear = days.length > 0 ? days[Math.floor(days.length / 2)]?.hijri.year : "";
+  // Determine current Hijri month range for header.
+  // Pakai majority vote: bulan Hijriah yang paling banyak muncul di bulan Masehi ini.
+  const hijriMonthInfo = useMemo(() => {
+    if (days.length === 0) return { name: "", year: 0 };
+    const monthCounts: Record<number, number> = {};
+    const yearByMonth: Record<number, Set<number>> = {};
+    for (const d of days) {
+      monthCounts[d.hijri.month] = (monthCounts[d.hijri.month] || 0) + 1;
+      if (!yearByMonth[d.hijri.month]) yearByMonth[d.hijri.month] = new Set();
+      yearByMonth[d.hijri.month].add(d.hijri.year);
+    }
+    let majorityMonth = days[0].hijri.month;
+    let maxCount = 0;
+    for (const [m, c] of Object.entries(monthCounts)) {
+      if (c > maxCount) {
+        maxCount = c;
+        majorityMonth = Number(m);
+      }
+    }
+    const years = yearByMonth[majorityMonth] || new Set();
+    const year = years.size > 0 ? Array.from(years).sort()[0] : 0;
+    return { month: majorityMonth, year };
+  }, [days]);
+
+  const currentHijriMonthName = useMemo(() => {
+    const HIJRI_MONTH_NAMES = [
+      "Muharram", "Safar", "Rabiul Awal", "Rabiul Akhir",
+      "Jumadil Awal", "Jumadil Akhir", "Rajab", "Sya'ban",
+      "Ramadan", "Syawal", "Dzulqa'dah", "Dzulhijjah",
+    ];
+    return HIJRI_MONTH_NAMES[hijriMonthInfo.month - 1] || "";
+  }, [hijriMonthInfo.month]);
 
   return (
     <div>
@@ -77,9 +106,9 @@ export function HijriCalendar({
           <h2 className="text-lg font-bold text-foreground">
             {MONTH_NAMES[month]} {year}
           </h2>
-          {currentHijriMonth && (
+          {currentHijriMonthName && (
             <p className="text-xs text-muted-foreground">
-              {currentHijriMonth} {currentHijriYear} H
+              {currentHijriMonthName} {hijriMonthInfo.year} H
             </p>
           )}
         </div>
