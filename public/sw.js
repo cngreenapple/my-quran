@@ -1,5 +1,5 @@
 const APP_VERSION = '1.0.1';
-const CACHE_VERSION = `v3-${APP_VERSION}`;
+const CACHE_VERSION = `v4-${APP_VERSION}`;
 const STATIC_CACHE = `alquran-static-${CACHE_VERSION}`;
 const API_CACHE = `alquran-api-${CACHE_VERSION}`;
 const AUDIO_CACHE = `alquran-audio-${CACHE_VERSION}`;

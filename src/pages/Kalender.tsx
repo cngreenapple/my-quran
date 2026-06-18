@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Calendar as CalendarIcon, Sparkles, Moon, Info, Star, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Sparkles, Moon, Info, Star, BookOpen, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -8,7 +8,6 @@ import { Header } from "@/components/Header";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { HijriCalendar } from "@/components/HijriCalendar";
 import { HolidayList } from "@/components/HolidayList";
-import { useHijriCalendar } from "@/hooks/use-hijri-calendar";
 import { getMonthCalendar, getUpcomingEvents, getTodayInfo, formatFullDate } from "@/lib/hijri-calendar";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
@@ -22,21 +21,11 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
   const [viewDate, setViewDate] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [activeTab, setActiveTab] = useState<"kalender" | "libur">("kalender");
 
-  // Primary: Aladhan API (reliable, no local algorithm bugs)
-  const {
-    data: apiDays,
-    isLoading: isLoadingCalendar,
-    isError: isCalendarError,
-    refetch: refetchCalendar,
-  } = useHijriCalendar(viewDate.year, viewDate.month + 1);
-
-  // Fallback: local calculation if API fails
-  const fallbackDays = useMemo(
+  // Pakai local algorithm (sebelumnya)
+  const days = useMemo(
     () => getMonthCalendar(viewDate.year, viewDate.month, { today }),
     [viewDate.year, viewDate.month, today],
   );
-
-  const days = apiDays || fallbackDays;
 
   const upcomingEvents = useMemo(() => getUpcomingEvents({ daysAhead: 90 }), []);
   const todayInfo = useMemo(() => getTodayInfo(today), [today]);
@@ -114,27 +103,56 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
           <TabsContent value="kalender" className="space-y-3 animate-fade-in">
             <Card className="border-border/60">
               <CardContent className="p-3 sm:p-4">
-                {isLoadingCalendar ? (
-                  <div className="flex flex-col items-center justify-center py-12" aria-busy="true">
-                    <Loader2 className="w-7 h-7 text-primary animate-spin mb-2" aria-hidden="true" />
-                    <p className="text-xs text-muted-foreground">Memuat kalender dari Aladhan...</p>
+                <HijriCalendar year={viewDate.year} month={viewDate.month} days={days} onPrev={handlePrev} onNext={handleNext} />
+                <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-center">
+                  <Button variant="outline" size="sm" onClick={handleToday} className="rounded-full h-7 text-xs" aria-label="Kembali ke bulan ini">Hari Ini</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Card edukatif: cara membaca cell kalender */}
+            <Card className="border-sky-500/30 bg-gradient-to-br from-sky-500/5 to-transparent">
+              <CardContent className="p-3.5">
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 w-9 h-9 rounded-xl bg-sky-500/15 flex items-center justify-center" aria-hidden="true">
+                    <Eye className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                   </div>
-                ) : isCalendarError ? (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Info className="w-7 h-7 text-amber-500 mb-2" aria-hidden="true" />
-                    <p className="text-xs text-muted-foreground mb-2">Gagal memuat dari server, menampilkan data lokal.</p>
-                    <Button variant="outline" size="sm" onClick={() => refetchCalendar()} className="rounded-full h-7 text-xs">
-                      Coba Lagi
-                    </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-foreground mb-1.5 flex items-center gap-2">
+                      Cara Baca Cell Kalender
+                    </p>
+                    <div className="space-y-1.5 text-[11px] text-foreground/85 leading-relaxed">
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Angka besar (contoh: 1)</strong> = tanggal Masehi (Gregorian), misalnya 1 November 2025</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Angka kecil pudar (contoh: 7)</strong> = tanggal Hijriah yang ekuivalen, misalnya 7 Jumadil Akhir 1447 H</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Label teks (contoh: "Maulid Nabi", "Asyura", "Senin", "Kamis")</strong> = penanda hari besar Islam atau puasa sunnah</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Emoji di pojok kanan atas</strong> (🎉, 🌙, dll) = penanda visual untuk hari besar Islam</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Bar vertikal di sisi kanan</strong> = penanda puasa sunnah (Senin/Kamis, Ayyamul Bidh, Asyura, dll.)</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Background biru-hijau</strong> = hari ini. <strong>Hijau lembut</strong> = hari Jumat. <strong>Abu-abu</strong> = weekend (Sabtu/Minggu)</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-foreground tabular-nums shrink-0">•</span>
+                        <span><strong>Hover/tap cell</strong> akan menampilkan tooltip lengkap dengan detail hari besar, puasa, dan ucapan</span>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <HijriCalendar year={viewDate.year} month={viewDate.month} days={days} onPrev={handlePrev} onNext={handleNext} />
-                )}
-                {!isLoadingCalendar && (
-                  <div className="mt-3 pt-3 border-t border-border/40 flex items-center justify-center">
-                    <Button variant="outline" size="sm" onClick={handleToday} className="rounded-full h-7 text-xs" aria-label="Kembali ke bulan ini">Hari Ini</Button>
-                  </div>
-                )}
+                </div>
               </CardContent>
             </Card>
 
@@ -166,7 +184,7 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
 
             <Card className="border-border/60">
               <CardContent className="p-3.5">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2.5">Keterangan</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2.5">Keterangan Warna</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2 text-[11px]">
                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-gradient-to-br from-primary to-emerald-700 ring-2 ring-primary/40 shrink-0" aria-hidden="true" /><span>Hari ini</span></div>
                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-500/15 ring-1 ring-emerald-500/40 shrink-0" aria-hidden="true" /><span>Hari besar</span></div>
@@ -175,8 +193,8 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
                   <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-muted/40 shrink-0" aria-hidden="true" /><span>Weekend</span></div>
                 </div>
                 <div className="mt-2.5 pt-2.5 border-t border-border/40 text-[11px] text-muted-foreground leading-relaxed flex items-start gap-1.5">
-                  <Info className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
-                  <span>Konversi kalender berdasarkan API <strong>Aladhan</strong> dengan metode <strong>Umm al-Qura</strong>. Tanggal Hijriah dapat berbeda ±1 hari tergantung rukyat lokal.</span>
+                  <BookOpen className="w-3 h-3 mt-0.5 shrink-0" aria-hidden="true" />
+                  <span>Konversi kalender menggunakan <strong>algoritma Julian Day ke Hijriah</strong>. Tanggal Hijriah dapat berbeda ±1 hari tergantung rukyat (pengamatan bulan) lokal di berbagai negara.</span>
                 </div>
               </CardContent>
             </Card>

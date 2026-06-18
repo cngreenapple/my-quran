@@ -41,6 +41,7 @@ function puasaShortName(puasa: { title: string; note?: string }): string {
   if (puasa.note === "Puasa Kamis") return "Kamis";
   if (puasa.title === "Puasa Ayyamul Bidh") return "Ayyamul Bidh";
   if (puasa.title === "Puasa Arafah") return "Arafah";
+  if (puasa.title === "Puaya Asyura") return "Asyura";
   if (puasa.title === "Puasa Asyura") return "Asyura";
   if (puasa.title === "Puasa Tasu'a") return "Tasu'a";
   if (puasa.title === "Puasa 9 Hari Pertama Dzulhijjah") return "Awal Dzulhijjah";
@@ -75,6 +76,9 @@ export function HijriCalendar({ year, month, days, onPrev, onNext }: HijriCalend
     const hijriYear = years.size > 0 ? Array.from(years).sort()[0] : 0;
     return { month: majorityMonth, year: hijriYear };
   }, [days]);
+
+  const holidayCount = days.filter((d) => d.holidays.length > 0).length;
+  const puasaCount = days.reduce((s, d) => s + d.puasaSunnah.length, 0);
 
   return (
     <div>
@@ -149,6 +153,10 @@ export function HijriCalendar({ year, month, days, onPrev, onNext }: HijriCalend
           const holidayText = holiday ? holidayShortName(holiday.name) : "";
           const puasaText = puasa ? puasaShortName(puasa) : "";
 
+          // Sanity guard: kalau ada bug, value akan jadi string kosong supaya tidak render "undefined" atau angka invalid
+          const safeGregDay = typeof day.gregorian.day === "number" && day.gregorian.day > 0 ? day.gregorian.day : "";
+          const safeHijriDay = typeof day.hijri.day === "number" && day.hijri.day > 0 ? day.hijri.day : "";
+
           return (
             <div
               key={day.gregorian.date.toISOString()}
@@ -179,12 +187,12 @@ export function HijriCalendar({ year, month, days, onPrev, onNext }: HijriCalend
             >
               {/* Row 1: Tanggal Gregorian (besar) - explicit div block */}
               <div className="text-xl sm:text-2xl font-bold leading-none tabular-nums">
-                {day.gregorian.day}
+                {safeGregDay}
               </div>
 
               {/* Row 2: Tanggal Hijri (kecil, faded) - explicit div block */}
               <div className="text-[9px] sm:text-[10px] font-semibold leading-none tabular-nums opacity-50 mt-0.5">
-                {day.hijri.day}
+                {safeHijriDay}
               </div>
 
               {/* Row 3: Label holiday/puasa (optional) */}
@@ -240,9 +248,9 @@ export function HijriCalendar({ year, month, days, onPrev, onNext }: HijriCalend
 
       {/* Caption ringkas di bawah grid */}
       <div className="mt-3 text-center text-[10px] text-muted-foreground">
-        Hari besar: <span className="font-semibold text-foreground">{days.filter((d) => d.holidays.length > 0).length}</span>
+        Hari besar: <span className="font-semibold text-foreground">{holidayCount}</span>
         {" • "}
-        Puasa sunnah: <span className="font-semibold text-foreground">{days.reduce((s, d) => s + d.puasaSunnah.length, 0)}</span> kesempatan
+        Puasa sunnah: <span className="font-semibold text-foreground">{puasaCount}</span> kesempatan
       </div>
     </div>
   );
