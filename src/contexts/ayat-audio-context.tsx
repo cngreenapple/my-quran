@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getAyatAudioUrl, getAyatAudioSources, findWorkingAyatAudioUrl } from "@/lib/api";
+import { getAyatAudioSources, appendAudioSources } from "@/lib/api";
 import { broadcastStop, subscribeToStop } from "@/lib/audio-coordinator";
 
 interface AyatAudioState {
@@ -98,7 +98,7 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
       });
       setIsLoading(false);
       setIsPlaying(false);
-      setError("Gagal memuat audio ayat");
+      setError("Gagal memuat audio ayat. Coba ayat lain atau periksa koneksi.");
     };
 
     audio.addEventListener("timeupdate", onTimeUpdate);
@@ -123,11 +123,12 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
+      while (audio.firstChild) audio.removeChild(audio.firstChild);
       audio.load();
     };
   }, []);
 
-  // Stop global saat halaman di-hide / di-close
+  // Pause audio saat tab di-hide atau sebelum unload
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -154,7 +155,8 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Subscribe to coordination events - pause when surah audio starts
+  // Subscribe ke coordination events - pause ketika surah audio dimulai
+  // Deps kosong: subscribe sekali, ref untuk akses current state
   useEffect(() => {
     const unsubscribe = subscribeToStop((event) => {
       if (event.mode !== "ayat" && currentAyat !== null) {
@@ -165,7 +167,7 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
       }
     });
     return unsubscribe;
-  }, [currentAyat]);
+  }, []);
 
   const playAyat = useCallback(async (surahNumber: number, ayatNumber: number) => {
     const audio = audioRef.current;
@@ -180,24 +182,21 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     setProgress(0);
     setDuration(0);
 
-    // Find a working CDN first (pre-flight check)
-    let url: string;
-    try {
-      url = (await findWorkingAyatAudioUrl(surahNumber, ayatNumber)) || getAyatAudioUrl(surahNumber, ayatNumber);
-    } catch (err) {
-      console.error("[AyatAudio] Failed to find working CDN", err);
-      url = getAyatAudioUrl(surahNumber, ayatNumber);
-    }
+    // Setup audio element dengan multiple source untuk fallback otomatis
+    audio.removeAttribute("src");
+    while (audio.firstChild) audio.removeChild(audio.firstChild);
 
-    // Check if this play call is still current
-    if (token !== playTokenRef.current) return;
+    const sources = getAyatAudioSources(surahNumber, ayatNumber);
+    appendAudioSources(audio, sources);
 
-    console.log(`[AyatAudio] Playing ayat ${surahNumber}:${ayatNumber}`, url);
-    setCurrentAyat({ surahNumber, ayatNumber, url });
+    setCurrentAyat({ surahNumber, ayatNumber, url: sources[0].src });
     setIsPlaying(false);
 
-    audio.src = url;
     audio.load();
+
+    if (token !== playTokenRef.current) return;
+
+    console.log(`[AyatAudio] Playing ayat ${surahNumber}:${ayatNumber}`);
 
     const safePlay = async () => {
       try {
@@ -233,7 +232,7 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
 
     if (audio.paused) {
-      // Saat resume, broadcast stop ke surah (sama seperti playAyat baru)
+      // Saat resume, broadcast stop ke surah
       if (currentAyat) {
         broadcastStop("ayat", `${currentAyat.surahNumber}:${currentAyat.ayatNumber}`);
       }
@@ -264,6 +263,7 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     audio.pause();
     audio.currentTime = 0;
     audio.removeAttribute("src");
+    while (audio.firstChild) audio.removeChild(audio.firstChild);
     audio.load();
     setCurrentAyat(null);
     setIsPlaying(false);
@@ -301,7 +301,7 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     [isCurrentAyat, isLoading],
   );
 
-  // Memoize context value to keep reference stable across renders
+  // Memoize context value
   const value = useMemo<AyatAudioContextValue>(
     () => ({
       currentAyat,

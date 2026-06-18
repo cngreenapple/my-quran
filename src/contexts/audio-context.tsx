@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchSurahList, findWorkingAudioUrl } from "@/lib/api";
+import { fetchSurahList, getAudioSources, appendAudioSources } from "@/lib/api";
 import { broadcastStop, subscribeToStop } from "@/lib/audio-coordinator";
 
 interface AudioContextValue {
@@ -40,7 +40,7 @@ function getAudioErrorMessage(error: unknown): string {
     return "Klik tombol play untuk memulai audio (browser memerlukan interaksi).";
   }
   if (error.name === "NotSupportedError") {
-    return "Format audio tidak didukung oleh sumber. Mencoba sumber lain...";
+    return "Format audio tidak didukung. Coba surah lain.";
   }
   return error.message || "Gagal memutar audio.";
 }
@@ -63,7 +63,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity,
   });
 
-  // Refs to access latest state inside stable event handlers
+  // Refs untuk akses latest state dalam stable event handlers
   const currentSurahRef = useRef<number | null>(currentSurah);
   const surahListRef = useRef(surahList);
   const playRef = useRef<((surahNumber: number, surahName: string) => void) | null>(null);
@@ -77,7 +77,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     surahListRef.current = surahList;
   }, [surahList]);
 
-  // Initialize audio element ONCE (empty deps) so play() always references the same element
+  // Initialize audio element ONCE
   useEffect(() => {
     const audio = new Audio();
     audio.preload = "metadata";
@@ -156,11 +156,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
+      // Bersihkan <source> children
+      while (audio.firstChild) audio.removeChild(audio.firstChild);
       audio.load();
     };
   }, []);
 
-  // Stop global saat halaman di-hide / di-close
+  // Pause audio saat tab di-hide atau sebelum unload
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -187,10 +189,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Subscribe to coordination events - pause when ayat audio starts
+  // Subscribe ke coordination events - pause ketika ayat audio dimulai
+  // Deps kosong: subscribe sekali, pakai ref untuk akses current state
   useEffect(() => {
     const unsubscribe = subscribeToStop((event) => {
-      if (event.mode !== "surah" && currentSurah !== null) {
+      // event.mode !== "surah" berarti ayat audio yang broadcast
+      if (event.mode !== "surah" && currentSurahRef.current !== null) {
         const audio = audioRef.current;
         if (audio && !audio.paused) {
           audio.pause();
@@ -198,7 +202,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       }
     });
     return unsubscribe;
-  }, [currentSurah]);
+  }, []);
 
   const play = useCallback(async (surahNumber: number, surahName: string) => {
     const audio = audioRef.current;
@@ -215,23 +219,23 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setError(null);
     setIsLoadingAudio(true);
 
-    // Find a working CDN first (pre-flight check)
-    let url: string;
-    try {
-      url = (await findWorkingAudioUrl(surahNumber)) || "";
-    } catch (err) {
-      console.error("[Audio] Failed to find working CDN", err);
-      url = `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${surahNumber.toString().padStart(3, "0")}.mp3`;
-    }
+    // Setup audio element dengan multiple source untuk fallback otomatis
+    // Hapus src & source lama
+    audio.removeAttribute("src");
+    while (audio.firstChild) audio.removeChild(audio.firstChild);
 
-    // Check if this play call is still current
+    // Append <source> untuk setiap CDN. Browser otomatis try next kalau error.
+    const sources = getAudioSources(surahNumber);
+    appendAudioSources(audio, sources);
+
+    // Set primary URL untuk display di UI
+    setAudioUrl(sources[0].src);
+
+    audio.load();
+
     if (token !== playTokenRef.current) return;
 
-    console.log(`[Audio] Playing surah ${surahNumber}: ${surahName}`, url);
-    setAudioUrl(url);
-
-    audio.src = url;
-    audio.load();
+    console.log(`[Audio] Playing surah ${surahNumber}: ${surahName}`);
 
     const safePlay = async () => {
       try {
@@ -299,6 +303,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     audio.pause();
     audio.currentTime = 0;
     audio.removeAttribute("src");
+    while (audio.firstChild) audio.removeChild(audio.firstChild);
     audio.load();
     setCurrentSurah(null);
     setCurrentSurahName("");
@@ -317,13 +322,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setProgress(audio.currentTime);
   }, []);
 
-  // Keep refs in sync with latest callback implementations (for use in stable event handlers)
+  // Keep refs in sync dengan latest callback implementations
   useEffect(() => {
     playRef.current = play;
     stopRef.current = stop;
   }, [play, stop]);
 
-  // Memoize context value to prevent unnecessary re-renders and effect re-runs
+  // Memoize context value
   const value = useMemo<AudioContextValue>(
     () => ({
       currentSurah,

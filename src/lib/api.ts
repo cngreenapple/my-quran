@@ -9,7 +9,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
   try {
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal,
+      signal: controller.srcsignal,
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -32,7 +32,7 @@ export async function fetchSurahDetail(nomor: number): Promise<SurahDetail> {
   return data.data;
 }
 
-// Audio murottal Al-Afasy dari beberapa CDN (semua verified working)
+// Audio murottal Al-Afasy dari beberapa CDN
 // Format: 3-digit padded surah number (001, 002, ..., 114)
 const pad3 = (n: number) => n.toString().padStart(3, "0");
 
@@ -43,16 +43,17 @@ const AUDIO_CDNS = [
   (n: number) => `https://server8.mp3quran.net/afs/${pad3(n)}.mp3`,
   // Fallback 2 - everyayah.com
   (n: number) => `https://everyayah.com/data/Alafasy_128kbps/${pad3(n)}001.mp3`,
-  // Fallback 3 - Islamic Network (last resort, known CORS issues)
+  // Fallback 3 - Islamic Network
   (n: number) => `https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${n}.mp3`,
 ];
 
-// Returns primary audio URL
+// Returns primary audio URL (dipakai untuk initial load — fast path)
 export function getAudioUrl(nomor: number): string {
   return AUDIO_CDNS[0](nomor);
 }
 
-// Returns all fallback URLs for audio element with <source> tags
+// Returns all fallback URLs untuk <audio> element dengan multiple <source> tags.
+// Audio element HTML5 akan otomatis try source kedua kalau source pertama error.
 export function getAudioSources(nomor: number): { src: string; type: string }[] {
   return AUDIO_CDNS.map((fn) => ({
     src: fn(nomor),
@@ -79,7 +80,7 @@ export function getAyatAudioUrl(surah: number, ayat: number): string {
   return AYAT_AUDIO_CDNS[0](surah, ayat);
 }
 
-// Returns all fallback URLs for per-ayat audio
+// Returns all fallback URLs untuk per-ayat audio
 export function getAyatAudioSources(surah: number, ayat: number): { src: string; type: string }[] {
   return AYAT_AUDIO_CDNS.map((fn) => ({
     src: fn(surah, ayat),
@@ -87,53 +88,22 @@ export function getAyatAudioSources(surah: number, ayat: number): { src: string;
   }));
 }
 
-// Pre-flight check: verify URL returns valid audio (HEAD request)
-export async function checkAudioUrl(url: string, timeoutMs = 5000): Promise<boolean> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, {
-      method: "HEAD",
-      mode: "cors",
-      signal: controller.signal,
-    });
-    if (!response.ok) return false;
-    const contentType = response.headers.get("content-type") || "";
-    return contentType.startsWith("audio/") || contentType === "application/octet-stream";
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
+/**
+ * Helper: append multiple <source> elements ke <audio> untuk fallback otomatis.
+ * Browser akan otomatis try next source kalau current source error.
+ *
+ * Catatan: pakai ini LEBIH BAIK dari HEAD pre-flight check karena:
+ * 1. HEAD tidak reliable — beberapa CDN return 403 untuk HEAD walaupun GET works
+ * 2. Tidak ada delay tambahan sebelum playback dimulai
+ * 3. Browser handle fallback secara native dengan error recovery
+ */
+export function appendAudioSources(audio: HTMLAudioElement, sources: { src: string; type: string }[]): void {
+  for (const s of sources) {
+    const source = document.createElement("source");
+    source.src = s.src;
+    source.type = s.type;
+    audio.appendChild(source);
   }
-}
-
-// Test all CDNs and return first working URL (for pre-warming)
-export async function findWorkingAudioUrl(nomor: number): Promise<string | null> {
-  for (const fn of AUDIO_CDNS) {
-    const url = fn(nomor);
-    const works = await checkAudioUrl(url);
-    if (works) {
-      console.log(`[Audio] Found working CDN: ${url}`);
-      return url;
-    }
-  }
-  // If all HEAD checks fail, return primary anyway (CDN might not support HEAD)
-  console.warn(`[Audio] All CDN HEAD checks failed, falling back to primary URL`);
-  return AUDIO_CDNS[0](nomor);
-}
-
-// Test all per-ayat CDNs and return first working URL
-export async function findWorkingAyatAudioUrl(surah: number, ayat: number): Promise<string | null> {
-  for (const fn of AYAT_AUDIO_CDNS) {
-    const url = fn(surah, ayat);
-    const works = await checkAudioUrl(url);
-    if (works) {
-      console.log(`[Audio] Found working per-ayat CDN: ${url}`);
-      return url;
-    }
-  }
-  console.warn(`[Audio] All per-ayat CDN HEAD checks failed, falling back to primary URL`);
-  return AYAT_AUDIO_CDNS[0](surah, ayat);
 }
 
 export function formatDuration(seconds: number): string {
