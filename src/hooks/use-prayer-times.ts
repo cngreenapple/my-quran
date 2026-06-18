@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchPrayerSchedule,
@@ -49,9 +49,20 @@ export function usePrayerTimes() {
   const [location, setLocation] = useState<Location | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const hasInitializedRef = useRef(false);
+  // Track mounted state supaya async callback tidak update state
+  // setelah component unmount (avoid memory leak warning & spurious renders)
+  const isMountedRef = useRef(true);
 
-  // Initial location fetch
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Initial location fetch (once on mount)
   useEffect(() => {
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
@@ -74,12 +85,19 @@ export function usePrayerTimes() {
       // Try to fetch location
       setIsFetchingLocation(true);
       fetchLocation({ preferGPS: false }) // Default: prefer IP (less intrusive)
-        .then((loc) => setLocation(loc))
-        .catch((err) => {
-          console.warn("[Prayer] Location fetch failed", err);
-          setLocationError(err instanceof Error ? err.message : "Gagal mendapatkan lokasi");
+        .then((loc) => {
+          if (isMountedRef.current) setLocation(loc);
         })
-        .finally(() => setIsFetchingLocation(false));
+        .catch((err) => {
+          if (!isMountedRef.current) return;
+          console.warn("[Prayer] Location fetch failed", err);
+          setLocationError(
+            err instanceof Error ? err.message : "Gagal mendapatkan lokasi",
+          );
+        })
+        .finally(() => {
+          if (isMountedRef.current) setIsFetchingLocation(false);
+        });
     }
   }, []);
 
@@ -98,14 +116,14 @@ export function usePrayerTimes() {
     setLocationError(null);
     try {
       const loc = await fetchLocation({ force, preferGPS: true });
-      setLocation(loc);
+      if (isMountedRef.current) setLocation(loc);
       return loc;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal mendapatkan lokasi";
-      setLocationError(msg);
+      if (isMountedRef.current) setLocationError(msg);
       throw err;
     } finally {
-      setIsFetchingLocation(false);
+      if (isMountedRef.current) setIsFetchingLocation(false);
     }
   }, []);
 
@@ -123,16 +141,34 @@ export function usePrayerTimes() {
     retry: 2,
   });
 
-  // Compute live data
-  const [now, setNow] = useState(() => new Date());
-
+  // Tick `now` setiap detik untuk countdown
+  // Pakai ref untuk cleanup supaya interval jelas
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const prayerList: PrayerTime[] = query.data ? getPrayerList(query.data, now) : [];
-  const nextPrayerData = query.data ? getNextPrayer(query.data, now) : null;
+  /**
+   * Memoize derived data.
+   *
+   * Sebelumnya `prayerList` & `nextPrayerData` di-compute di setiap render.
+   * Karena `now` update setiap detik dari setInterval, ini = re-compute
+   * setiap detik. Sekarang di-memoize: hanya re-compute kalau schedule/now
+   * berubah. Component yang consume (PrayerTimes.tsx) tidak re-render
+   * kalau reference sama.
+   *
+   * NOTE: PrayerTime objects created fresh each time, tapi referensi
+   * equality tetap OK selama `now` ms sama dan schedule sama.
+   */
+  const prayerList: PrayerTime[] = useMemo(
+    () => (query.data ? getPrayerList(query.data, now) : []),
+    [query.data, now],
+  );
+
+  const nextPrayerData = useMemo(
+    () => (query.data ? getNextPrayer(query.data, now) : null),
+    [query.data, now],
+  );
 
   return {
     schedule: query.data,

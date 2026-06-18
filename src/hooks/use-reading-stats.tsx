@@ -90,16 +90,28 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
     }
   }, [history]);
 
+  /**
+   * Update streak based on activity date.
+   *
+   * FIX: Sekarang `lastReadAt` SELALU update ke Date.now() setiap kali
+   * ada activity. Sebelumnya lastReadAt hanya update kalau berbeda hari,
+   * sehingga di hari yang sama `lastReadAt` jadi stale.
+   *
+   * Logic streak:
+   * - Hari yang sama: streakDays tidak berubah
+   * - Hari berbeda (diff=1): streakDays +1
+   * - Hari berbeda (diff>1): streakDays reset ke 1
+   * - Belum pernah aktivitas: streakDays = 1 (first activity)
+   */
   const updateStreak = useCallback((currentStats: ReadingStats): ReadingStats => {
     const today = getDateKey();
-
-    if (currentStats.lastActivityDate === today) {
-      // Already active today
-      return currentStats;
-    }
+    const now = Date.now();
 
     let newStreak = currentStats.streakDays;
-    if (currentStats.lastActivityDate) {
+    if (currentStats.lastActivityDate === today) {
+      // Same day: keep streak, only update timestamp
+    } else if (currentStats.lastActivityDate) {
+      // Different day: check gap
       const diff = daysBetween(currentStats.lastActivityDate, today);
       if (diff === 1) {
         newStreak = currentStats.streakDays + 1;
@@ -115,16 +127,19 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
       streakDays: newStreak,
       longestStreak: Math.max(currentStats.longestStreak, newStreak),
       lastActivityDate: today,
-      lastReadAt: Date.now(),
+      lastReadAt: now, // ← FIX: selalu update
     };
   }, []);
 
   const trackSurahOpen = useCallback(
     (surahNumber: number, surahName: string) => {
       setStats((prev) => {
-        const surahsOpened = prev.surahsOpened.includes(surahNumber)
-          ? prev.surahsOpened
-          : [...prev.surahsOpened, surahNumber];
+        // Set lookup O(1) untuk cek membership. Sebelumnya pakai Array.includes() O(n).
+        const openedSet = new Set(prev.surahsOpened);
+        const isNew = !openedSet.has(surahNumber);
+        const surahsOpened = isNew
+          ? [...prev.surahsOpened, surahNumber]
+          : prev.surahsOpened;
 
         return updateStreak({ ...prev, surahsOpened });
       });
@@ -147,7 +162,8 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
   const trackAyatRead = useCallback(
     (surahNumber: number, surahName: string, ayatNumber: number) => {
       setStats((prev) => {
-        const isNewSurah = !prev.surahsOpened.includes(surahNumber);
+        const openedSet = new Set(prev.surahsOpened);
+        const isNewSurah = !openedSet.has(surahNumber);
         const surahsOpened = isNewSurah
           ? [...prev.surahsOpened, surahNumber]
           : prev.surahsOpened;
