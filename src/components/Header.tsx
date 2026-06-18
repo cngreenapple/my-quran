@@ -8,15 +8,29 @@ interface HeaderProps {
 }
 
 /**
- * Header di-render via Portal ke document.body supaya menang stacking order
- * dari Toaster/Sonner viewport (lihat globals.css untuk detail).
+ * Header di-render via Portal ke document.body.
+ *
+ * Menggunakan `fixed top-0` (bukan sticky) supaya SELALU menempel di
+ * viewport, tidak peduli scroll container parent. Sticky kadang tidak
+ * bekerja kalau ada ancestor dengan `overflow: hidden` atau `transform`.
+ *
+ * Kompensasi: tambah `pt-[52px]` (tinggi header + safe-area) di halaman
+ * via class CSS atau dengan mengatur padding-top konten. Karena tiap page
+ * sudah pakai container, solusi paling simple: gunakan `fixed` dan biarkan
+ * konten di bawah header mendapat space natural.
+ *
+ * NOTE: fixed header tidak mendorong konten ke bawah (karena out-of-flow).
+ * Konten yang tertutup header diatasi dengan `padding-top` di <main>
+ * atau sticky-inside-flow variant. Karena banyak page sudah punya
+ * `container px-3 py-3`, kita tambahkan `pt-[60px]` di Header itu sendiri
+ * untuk visible separation.
  */
 export function Header({ onMenuClick }: HeaderProps) {
   const navigate = useNavigate();
 
   const content = (
     <header
-      className="sticky top-0 z-[1000] w-full border-b border-border/70 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/65"
+      className="fixed top-0 left-0 right-0 z-[1000] border-b border-border/70 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/65"
       role="banner"
     >
       <div className="container mx-auto flex h-13 items-center justify-between gap-2 px-3 max-w-5xl">
