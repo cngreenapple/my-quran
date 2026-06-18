@@ -13,16 +13,13 @@ export interface PuasaSunnahDate {
 }
 
 export const PUASA_SUNNAH_DATES: PuasaSunnahDate[] = [
-  // Ayyamul Bidh - 13, 14, 15 setiap bulan
-  { hijriDay: 13, hijriMonth: 1, puasaId: "ayyamul-bidh" },
-  { hijriDay: 14, hijriMonth: 1, puasaId: "ayyamul-bidh" },
-  { hijriDay: 15, hijriMonth: 1, puasaId: "ayyamul-bidh" },
-
   // Asyura (10 Muharram) & Tasu'a (9 Muharram)
+  // NOTE: Ayyamul Bidh (13, 14, 15) untuk SEMUA bulan di-handle otomatis
+  // oleh getPuasaSunnahForDate(), jadi tidak perlu di-hardcode di sini.
   { hijriDay: 9, hijriMonth: 1, puasaId: "tasua", note: "Dianjurkan berpuasa Tasu'a bersama Asyura" },
   { hijriDay: 10, hijriMonth: 1, puasaId: "asyura" },
 
-  // 9 Hari pertama Dzulhijjah
+  // 9 Hari pertama Dzulhijjah + Hari Arafah
   { hijriDay: 1, hijriMonth: 12, puasaId: "dzulhijjah-awal" },
   { hijriDay: 2, hijriMonth: 12, puasaId: "dzulhijjah-awal" },
   { hijriDay: 3, hijriMonth: 12, puasaId: "dzulhijjah-awal" },
@@ -52,7 +49,7 @@ export function getPuasaSunnahForDate(
 ): { puasa: FastingItem; note?: string; isRecurring: boolean }[] {
   const results: { puasa: FastingItem; note?: string; isRecurring: boolean }[] = [];
 
-  // Hardcoded dates
+  // Hardcoded dates (fixed Hijri dates)
   const matches = PUASA_SUNNAH_DATES.filter(
     (p) => p.hijriDay === hijriDay && p.hijriMonth === hijriMonth,
   );
@@ -63,7 +60,7 @@ export function getPuasaSunnahForDate(
     }
   }
 
-  // Ayyamul Bidh (13, 14, 15) untuk SEMUA bulan
+  // Ayyamul Bidh (13, 14, 15) untuk SEMUA bulan — auto-detect
   if (hijriDay >= 13 && hijriDay <= 15) {
     const ayyamulBidh = PUASA_SUNNAH.find((p) => p.id === "ayyamul-bidh");
     if (ayyamulBidh && !results.some((r) => r.puasa.id === "ayyamul-bidh")) {
@@ -75,7 +72,7 @@ export function getPuasaSunnahForDate(
     }
   }
 
-  // Senin & Kamis (weekday 1 = Monday, 4 = Thursday)
+  // Senin & Kamis (weekday 1 = Monday, 4 = Thursday) — auto-detect
   if (weekday === 1 || weekday === 4) {
     const seninKamis = PUASA_SUNNAH.find((p) => p.id === "senin-kamis");
     if (seninKamis && !results.some((r) => r.puasa.id === "senin-kamis")) {

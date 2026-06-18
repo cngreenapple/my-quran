@@ -1,16 +1,17 @@
+import type { ColorVariant } from "@/types/quran";
+
 export interface IslamicHoliday {
   id: string;
   name: string;
   nameArabic: string;
   description: string;
-  type: "fixed" | "calculated";
+  type: "fixed";
   // For fixed: { day, month } in Hijri calendar
-  // For calculated: special handling
   hijriDay?: number;
   hijriMonth?: number; // 1-12
   // Display options
   emoji: string;
-  color: "emerald" | "amber" | "rose" | "sky" | "violet";
+  color: ColorVariant;
   duration: number; // days, 1 = single day
   greeting?: string; // Indonesian greeting
 }
@@ -19,7 +20,7 @@ export interface PuasaSunnahMarker {
   id: string; // ID puasa sunnah
   title: string; // judul singkat
   emoji: string;
-  color: "emerald" | "amber" | "sky" | "rose" | "violet";
+  color: ColorVariant;
   note?: string;
   isRecurring?: boolean;
 }

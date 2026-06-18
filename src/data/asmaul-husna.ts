@@ -1,6 +1,16 @@
 import type { AsmaulHusna } from "@/types/asmaul-husna";
+import type { ColorVariant } from "@/types/quran";
 
-export const ASMAUL_HUSNA: AsmaulHusna[] = [
+/**
+ * Compute color variant dari nomor asma (round-robin 5 colors).
+ * Konsisten dengan dzikir/doa color scheme.
+ */
+function computeColor(number: number): ColorVariant {
+  const colors: ColorVariant[] = ["emerald", "amber", "sky", "rose", "violet"];
+  return colors[(number - 1) % colors.length];
+}
+
+const ASMAUL_HUSNA_DATA: Omit<AsmaulHusna, "color">[] = [
   { number: 1, arabic: "الرَّحْمَنُ", latin: "Ar-Raḥmān", meaningId: "Maha Pengasih", meaningEn: "The Most Compassionate", benefit: "Membuka pintu rezeki dan kasih sayang Allah" },
   { number: 2, arabic: "الرَّحِيمُ", latin: "Ar-Raḥīm", meaningId: "Maha Penyayang", meaningEn: "The Most Merciful", benefit: "Mendapatkan kasih sayang di dunia dan akhirat" },
   { number: 3, arabic: "الْمَلِكُ", latin: "Al-Malik", meaningId: "Maha Merajai", meaningEn: "The King", benefit: "Memiliki kewibawaan dan kehormatan" },
@@ -101,6 +111,30 @@ export const ASMAUL_HUSNA: AsmaulHusna[] = [
   { number: 98, arabic: "الرَّشِيدُ", latin: "Ar-Rashīd", meaningId: "Maha Pandai", meaningEn: "The Righteous Teacher", benefit: "Diberi petunjuk ke jalan benar" },
   { number: 99, arabic: "الصَّبُورُ", latin: "Aṣ-Ṣabūr", meaningId: "Maha Sabar", meaningEn: "The Patient One", benefit: "Diberi kesabaran yang luas" },
 ];
+
+// Build final data with computed color
+export const ASMAUL_HUSNA: AsmaulHusna[] = ASMAUL_HUSNA_DATA.map((a) => ({
+  ...a,
+  color: computeColor(a.number),
+}));
+
+// Dev-only validation: catch missing/duplicate at import time
+if (typeof window !== "undefined" && import.meta.env?.DEV) {
+  const numbers = ASMAUL_HUSNA_DATA.map((a) => a.number);
+  const unique = new Set(numbers);
+  if (numbers.length !== 99) {
+    console.error(`[AsmaulHusna] Expected 99 entries, got ${numbers.length}`);
+  }
+  if (unique.size !== 99) {
+    console.error(`[AsmaulHusna] Duplicate numbers detected: ${numbers.length - unique.size} duplicates`);
+  }
+  // Check sequential
+  for (let i = 1; i <= 99; i++) {
+    if (!unique.has(i)) {
+      console.error(`[AsmaulHusna] Missing number: ${i}`);
+    }
+  }
+}
 
 export function getAsmaByNumber(n: number) {
   return ASMAUL_HUSNA.find((a) => a.number === n);

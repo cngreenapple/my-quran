@@ -45,3 +45,10 @@ export interface BookmarkItem {
   previewText?: string;
   timestamp: number;
 }
+
+/**
+ * Shared color variant type — digunakan di seluruh app untuk
+ * dzikir, doa, asmaul husna, holiday, puasa sunnah, dll.
+ * Extract ke satu tempat supaya konsisten dan mudah di-maintain.
+ */
+export type ColorVariant = "emerald" | "amber" | "sky" | "rose" | "violet";

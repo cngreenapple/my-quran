@@ -1,3 +1,5 @@
+import type { ColorVariant } from "@/types/quran";
+
 export interface DzikirItem {
   id: string;
   arabic: string;
@@ -13,7 +15,7 @@ export interface DzikirCategory {
   name: string;
   description: string;
   emoji: string;
-  color: "emerald" | "amber" | "sky" | "rose" | "violet";
+  color: ColorVariant;
   items: DzikirItem[];
 }
 
@@ -40,7 +42,7 @@ export interface DoaCategoryInfo {
   id: DoaCategory;
   name: string;
   icon: string;
-  color: "emerald" | "amber" | "sky" | "rose" | "violet";
+  color: ColorVariant;
 }
 
 export interface DzikirCounter {

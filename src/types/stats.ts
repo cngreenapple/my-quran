@@ -20,5 +20,3 @@ export interface AppSettings {
   showTransliteration: boolean;
   autoPlayAudio: boolean;
 }
-
-export type ShareTheme = "emerald" | "sky" | "violet" | "amber" | "rose";
