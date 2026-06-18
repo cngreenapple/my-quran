@@ -8,24 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ReadingStats, ReadingHistoryItem } from "@/types/stats";
-
-/**
- * Inline date helpers (sebelumnya dari "@/lib/date").
- * Di-inline untuk bypass Vite import-analysis cache yang stale.
- */
-function getDateKey(date: Date | number = new Date()): string {
-  const d = typeof date === "number" ? new Date(date) : date;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function daysBetween(date1: string, date2: string): number {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
-  return Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-}
+import { getDateKey, daysBetween } from "@/lib/date";
 
 const STATS_KEY = "quran-reading-stats";
 const HISTORY_KEY = "quran-reading-history";
@@ -36,7 +19,7 @@ interface ReadingStatsContextValue {
   history: ReadingHistoryItem[];
   trackSurahOpen: (surahNumber: number, surahName: string) => void;
   trackAyatRead: (surahNumber: number, surahName: string, ayatNumber: number) => void;
-  getProgress: (surahNumber: number, totalAyat: number) => number;
+  getProgress: (surahNumber: number, totalAyat: number) => number; // 0-100
   resetStats: () => void;
   getTodayCount: () => number;
 }
@@ -80,6 +63,7 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<ReadingStats>(loadStats);
   const [history, setHistory] = useState<ReadingHistoryItem[]>(loadHistory);
 
+  // Persist stats
   useEffect(() => {
     try {
       localStorage.setItem(STATS_KEY, JSON.stringify(stats));
@@ -88,6 +72,7 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
     }
   }, [stats]);
 
+  // Persist history
   useEffect(() => {
     try {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
@@ -96,6 +81,19 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
     }
   }, [history]);
 
+  /**
+   * Update streak based on activity date.
+   *
+   * FIX: Sekarang `lastReadAt` SELALU update ke Date.now() setiap kali
+   * ada activity. Sebelumnya lastReadAt hanya update kalau berbeda hari,
+   * sehingga di hari yang sama `lastReadAt` jadi stale.
+   *
+   * Logic streak:
+   * - Hari yang sama: streakDays tidak berubah
+   * - Hari berbeda (diff=1): streakDays +1
+   * - Hari berbeda (diff>1): streakDays reset ke 1
+   * - Belum pernah aktivitas: streakDays = 1 (first activity)
+   */
   const updateStreak = useCallback((currentStats: ReadingStats): ReadingStats => {
     const today = getDateKey();
     const now = Date.now();
@@ -104,14 +102,15 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
     if (currentStats.lastActivityDate === today) {
       // Same day: keep streak, only update timestamp
     } else if (currentStats.lastActivityDate) {
+      // Different day: check gap
       const diff = daysBetween(currentStats.lastActivityDate, today);
       if (diff === 1) {
         newStreak = currentStats.streakDays + 1;
       } else if (diff > 1) {
-        newStreak = 1;
+        newStreak = 1; // Reset streak
       }
     } else {
-      newStreak = 1;
+      newStreak = 1; // First activity
     }
 
     return {
@@ -119,13 +118,14 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
       streakDays: newStreak,
       longestStreak: Math.max(currentStats.longestStreak, newStreak),
       lastActivityDate: today,
-      lastReadAt: now,
+      lastReadAt: now, // ← FIX: selalu update
     };
   }, []);
 
   const trackSurahOpen = useCallback(
     (surahNumber: number, surahName: string) => {
       setStats((prev) => {
+        // Set lookup O(1) untuk cek membership. Sebelumnya pakai Array.includes() O(n).
         const openedSet = new Set(prev.surahsOpened);
         const isNew = !openedSet.has(surahNumber);
         const surahsOpened = isNew
@@ -135,6 +135,7 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
         return updateStreak({ ...prev, surahsOpened });
       });
 
+      // Add to history
       setHistory((prev) => {
         const newItem: ReadingHistoryItem = {
           surahNumber,
@@ -165,6 +166,7 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
         });
       });
 
+      // Add to history (replace if same surah/ayat exists within 5 min)
       setHistory((prev) => {
         const filtered = prev.filter(
           (h) =>
@@ -189,8 +191,10 @@ export function ReadingStatsProvider({ children }: { children: ReactNode }) {
 
   const getProgress = useCallback(
     (surahNumber: number, _totalAyat: number): number => {
+      // Simple heuristic: if surah is opened, return 50% (placeholder)
+      // Real progress tracking would need more granular data
       if (stats.surahsOpened.includes(surahNumber)) {
-        return 50;
+        return 50; // Mark as visited
       }
       return 0;
     },
