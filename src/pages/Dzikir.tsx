@@ -2,6 +2,16 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, RotateCcw, Sparkles, BookHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Header } from "@/components/Header";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { DzikirCounterCard } from "@/components/DzikirCounterCard";
@@ -20,6 +30,7 @@ interface DzikirProps {
 export default function Dzikir({ onMenuClick }: DzikirProps) {
   useDocumentTitle("Dzikir Pagi & Petang");
   const [activeTab, setActiveTab] = useState<DzikirTabId>("pagi");
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const { resetCategory, getCounter } = useDzikirCounter();
   const activeCategory = activeTab === "pagi" ? DZIKIR_PAGI : DZIKIR_PETANG;
 
@@ -32,10 +43,10 @@ export default function Dzikir({ onMenuClick }: DzikirProps) {
     return { completed, total, percent: total > 0 ? (completed / total) * 100 : 0 };
   }, [activeCategory, getCounter]);
 
-  const handleResetCategory = () => {
-    if (!confirm(`Reset seluruh dzikir ${activeCategory.name.toLowerCase()}?`)) return;
+  const handleResetConfirm = () => {
     resetCategory(activeCategory.id);
     showSuccess(`${activeCategory.name} direset`);
+    setResetConfirmOpen(false);
   };
 
   return (
@@ -76,7 +87,7 @@ export default function Dzikir({ onMenuClick }: DzikirProps) {
         <p className="text-sm text-muted-foreground mb-4 text-center">{activeCategory.description}</p>
 
         {progress.completed > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleResetCategory} className="mb-4 mx-auto text-destructive hover:text-destructive rounded-full flex" aria-label={`Reset progress dzikir ${activeCategory.name}`}>
+          <Button variant="ghost" size="sm" onClick={() => setResetConfirmOpen(true)} className="mb-4 mx-auto text-destructive hover:text-destructive rounded-full flex" aria-label={`Reset progress dzikir ${activeCategory.name}`}>
             <RotateCcw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />Reset {activeCategory.name}
           </Button>
         )}
@@ -87,6 +98,28 @@ export default function Dzikir({ onMenuClick }: DzikirProps) {
           ))}
         </div>
       </main>
+
+      <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Dzikir {activeCategory.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan menghapus seluruh progress counter dzikir {activeCategory.name.toLowerCase()}.
+              Riwayat totalCompleted akan tetap dipertahankan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetConfirm}
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AudioPlayer />
     </div>
   );

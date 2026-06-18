@@ -63,7 +63,7 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           }
         });
       },
-      { threshold: 0.5 },
+      { threshold: 0.3 },
     );
     const elements = document.querySelectorAll('[id^="ayat-"]');
     elements.forEach((el) => observer.observe(el));

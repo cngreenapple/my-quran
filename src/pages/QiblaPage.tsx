@@ -4,7 +4,6 @@ import { QiblaCompass } from "@/components/QiblaCompass";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePrayerTimes } from "@/hooks/use-prayer-times";
 import { useDocumentTitle } from "@/hooks/use-document-title";
-import { getCompassDirection } from "@/lib/qibla";
 import { Compass, MapPin, AlertCircle } from "lucide-react";
 
 export default function QiblaPage() {
@@ -12,10 +11,6 @@ export default function QiblaPage() {
 
   const { location, locationError, isFetchingLocation, requestLocation } =
     usePrayerTimes();
-
-  const compassDirection = location
-    ? getCompassDirection(0)
-    : "—";
 
   return (
     <div className="min-h-dvh bg-background">

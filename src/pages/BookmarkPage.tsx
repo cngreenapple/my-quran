@@ -23,6 +23,7 @@ import { useBookmarksPage } from "@/hooks/use-bookmarks-page";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { showSuccess } from "@/utils/toast";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export default function BookmarkPage() {
   useDocumentTitle("Bookmark");
@@ -38,10 +39,14 @@ export default function BookmarkPage() {
     setConfirming,
   } = useBookmarksPage();
 
-  const handleClearAll = () => {
-    clearBookmarks();
-    showSuccess("Semua bookmark dihapus");
-    setConfirming(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (deletingId) {
+      removeBookmark(deletingId);
+      showSuccess("Bookmark dihapus");
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -150,11 +155,7 @@ export default function BookmarkPage() {
                     <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
                   </Link>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeBookmark(b.id);
-                      showSuccess("Bookmark dihapus");
-                    }}
+                    onClick={() => setDeletingId(b.id)}
                     className="px-3 border-l border-border/60 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
                     aria-label={`Hapus bookmark ayat ${b.ayatNumber}`}
                   >
@@ -178,10 +179,34 @@ export default function BookmarkPage() {
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-full">Batal</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleClearAll}
+              onClick={() => {
+                clearBookmarks();
+                showSuccess("Semua bookmark dihapus");
+                setConfirming(false);
+              }}
               className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Hapus Semua
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Bookmark?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bookmark untuk ayat ini akan dihapus permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
