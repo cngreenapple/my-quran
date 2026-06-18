@@ -6,19 +6,17 @@ export interface IslamicHoliday {
   nameArabic: string;
   description: string;
   type: "fixed";
-  // For fixed: { day, month } in Hijri calendar
   hijriDay?: number;
-  hijriMonth?: number; // 1-12
-  // Display options
+  hijriMonth?: number;
   emoji: string;
   color: ColorVariant;
-  duration: number; // days, 1 = single day
-  greeting?: string; // Indonesian greeting
+  duration: number;
+  greeting?: string;
 }
 
 export interface PuasaSunnahMarker {
-  id: string; // ID puasa sunnah
-  title: string; // judul singkat
+  id: string;
+  title: string;
   emoji: string;
   color: ColorVariant;
   note?: string;

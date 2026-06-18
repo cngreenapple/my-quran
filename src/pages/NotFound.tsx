@@ -14,13 +14,11 @@ const NotFound = ({ onMenuClick }: NotFoundProps) => {
     <div className="min-h-dvh flex flex-col bg-background">
       <Header onMenuClick={onMenuClick} />
       <main className="flex-1 flex items-center justify-center p-4" aria-labelledby="notfound-title" role="main">
-        <div className="text-center max-w-md">
-          <div className="text-8xl font-bold bg-gradient-to-br from-emerald-500 to-emerald-700 bg-clip-text text-transparent mb-4" aria-hidden="true">404</div>
-          <h1 id="notfound-title" className="text-2xl font-bold text-foreground mb-2">Halaman Tidak Ditemukan</h1>
-          <p className="text-muted-foreground mb-6">Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.</p>
-          <Button asChild className="rounded-full">
-            <Link to="/"><Home className="w-4 h-4 mr-2" aria-hidden="true" />Kembali ke Beranda</Link>
-          </Button>
+        <div className="text-center max-w-sm">
+          <div className="text-7xl font-bold bg-gradient-to-br from-emerald-500 to-emerald-700 bg-clip-text text-transparent mb-3" aria-hidden="true">404</div>
+          <h1 id="notfound-title" className="text-xl font-bold text-foreground mb-1">Halaman Tidak Ditemukan</h1>
+          <p className="text-xs text-muted-foreground mb-5">Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.</p>
+          <Button asChild className="rounded-full h-9"><Link to="/"><Home className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />Kembali ke Beranda</Link></Button>
         </div>
       </main>
     </div>

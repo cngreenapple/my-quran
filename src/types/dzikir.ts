@@ -5,9 +5,9 @@ export interface DzikirItem {
   arabic: string;
   latin: string;
   translation: string;
-  count: number; // target count
-  fawaid?: string; // benefits
-  source?: string; // hadith reference
+  count: number;
+  fawaid?: string;
+  source?: string;
 }
 
 export interface DzikirCategory {
@@ -52,5 +52,5 @@ export interface DzikirCounter {
   target: number;
   lastUpdated: number;
   completed: boolean;
-  totalCompleted: number; // for history
+  totalCompleted: number;
 }
