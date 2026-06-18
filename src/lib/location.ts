@@ -3,14 +3,12 @@
  * Strategy: GPS → IP Geolocation → Default (Jakarta)
  */
 
-export type LocationMethod = "gps" | "ip" | "default" | "manual";
-
 export interface Location {
   lat: number;
   lng: number;
   city?: string;
   country?: string;
-  method?: LocationMethod;
+  method?: "gps" | "ip" | "default" | "manual";
 }
 
 const DEFAULT_LOCATION: Location = {
@@ -33,7 +31,7 @@ export function calculateDistance(
   lat2: number,
   lng2: number,
 ): number {
-  const R = 6371;
+  const R = 6371; // radius bumi dalam km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
@@ -80,15 +78,10 @@ export function clearLocation() {
   }
 }
 
-export function getSavedPermissionMethod(): LocationMethod | null {
+export function getSavedPermissionMethod(): Location["method"] | null {
   try {
     const stored = localStorage.getItem(PERMISSION_KEY);
-    if (
-      stored === "gps" ||
-      stored === "ip" ||
-      stored === "default" ||
-      stored === "manual"
-    ) {
+    if (stored === "gps" || stored === "ip" || stored === "default" || stored === "manual") {
       return stored;
     }
     return null;
@@ -114,6 +107,7 @@ export function getGPSLocation(timeoutMs = 10000): Promise<Location> {
           lng: position.coords.longitude,
           method: "gps",
         };
+        // Reverse geocode untuk dapat nama kota (optional, best-effort)
         try {
           const name = await reverseGeocode(loc.lat, loc.lng);
           if (name) {
@@ -131,7 +125,7 @@ export function getGPSLocation(timeoutMs = 10000): Promise<Location> {
       {
         enableHighAccuracy: true,
         timeout: timeoutMs,
-        maximumAge: 5 * 60 * 1000,
+        maximumAge: 5 * 60 * 1000, // 5 menit cache
       },
     );
   });
@@ -145,10 +139,9 @@ export async function getIPLocation(): Promise<Location> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(
-      "http://ip-api.com/json/?fields=status,country,regionName,city,lat,lon",
-      { signal: controller.signal },
-    );
+    const res = await fetch("http://ip-api.com/json/?fields=status,country,regionName,city,lat,lon", {
+      signal: controller.signal,
+    });
     clearTimeout(timeout);
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -183,22 +176,14 @@ async function reverseGeocode(
     const timeout = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=id`,
-      {
-        signal: controller.signal,
-        headers: { "User-Agent": "AlQuranApp/1.0" },
-      },
+      { signal: controller.signal, headers: { "User-Agent": "AlQuranApp/1.0" } },
     );
     clearTimeout(timeout);
 
     if (!res.ok) return null;
     const data = await res.json();
     return {
-      city:
-        data.address?.city ||
-        data.address?.town ||
-        data.address?.village ||
-        data.address?.county ||
-        "",
+      city: data.address?.city || data.address?.town || data.address?.village || data.address?.county || "",
       country: data.address?.country || "",
     };
   } catch {
@@ -208,13 +193,15 @@ async function reverseGeocode(
 
 /**
  * Smart location fetcher: GPS → IP → default
- * Returns cached location kalau ada.
+ * Returns cached location kalau ada dan < 1 jam
  */
-export async function fetchLocation(
-  options: { force?: boolean; preferGPS?: boolean } = {},
-): Promise<Location> {
+export async function fetchLocation(options: {
+  force?: boolean;
+  preferGPS?: boolean;
+} = {}): Promise<Location> {
   const { force = false, preferGPS = true } = options;
 
+  // 1. Check cache (kecuali force)
   if (!force) {
     const cached = getCachedLocation();
     if (cached) {
@@ -223,6 +210,7 @@ export async function fetchLocation(
     }
   }
 
+  // 2. Try GPS
   if (preferGPS) {
     try {
       const gps = await getGPSLocation();
@@ -234,6 +222,7 @@ export async function fetchLocation(
     }
   }
 
+  // 3. Try IP
   try {
     const ip = await getIPLocation();
     saveLocation(ip);
@@ -243,6 +232,7 @@ export async function fetchLocation(
     console.warn("[Location] IP failed, using default", err);
   }
 
+  // 4. Default
   saveLocation(DEFAULT_LOCATION);
   return DEFAULT_LOCATION;
 }
@@ -250,9 +240,7 @@ export async function fetchLocation(
 /**
  * Save manual location (user pilih dari search/city list)
  */
-export function saveManualLocation(
-  loc: Omit<Location, "method">,
-): Location {
+export function saveManualLocation(loc: Omit<Location, "method">): Location {
   const finalLoc: Location = { ...loc, method: "manual" };
   saveLocation(finalLoc);
   return finalLoc;
