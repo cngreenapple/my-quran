@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Calendar, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,8 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { getTodayInfo, GREGORIAN_MONTH_NAMES } from "@/lib/date";
 import { getHolidayOnDate } from "@/data/islamic-holidays";
-import { CalendarHeader } from "@/components/kalender/CalendarHeader";
-import { CalendarMonthCard } from "@/components/kalender/CalendarMonthCard";
-import { HijriahMonthGrid } from "@/components/kalender/HijriahMonthGrid";
-import { GregorianMonthGrid } from "@/components/kalender/GregorianMonthGrid";
-import { CalendarLegend } from "@/components/kalender/CalendarLegend";
+import { CalendarGrid } from "@/components/kalender/CalendarGrid";
 import { HolidaysTable } from "@/components/kalender/HolidaysTable";
-import { HIJRI_MONTH_NAMES_ID } from "@/components/kalender/constants";
 
 interface KalenderPageProps {
   onMenuClick: () => void;
@@ -85,7 +80,7 @@ export default function KalenderPage({ onMenuClick }: KalenderPageProps) {
           </TabsList>
 
           <TabsContent value="calendar" className="animate-fade-in">
-            <CalendarView today={today} />
+            <CalendarGrid today={today} />
           </TabsContent>
 
           <TabsContent value="holidays" className="animate-fade-in">
@@ -151,100 +146,5 @@ function TodayCard({ today, todayHoliday }: TodayCardProps) {
         )}
       </CardContent>
     </Card>
-  );
-}
-
-// --- CalendarView: state & navigation untuk 2 grid (Hijriah + Masehi) ---
-
-interface CalendarViewProps {
-  today: ReturnType<typeof getTodayInfo>;
-}
-
-function CalendarView({ today }: CalendarViewProps) {
-  const [hijriYear, setHijriYear] = useState(today.hijri.year);
-  const [hijriMonth, setHijriMonth] = useState(today.hijri.month);
-  const [gregYear, setGregYear] = useState(today.gregorian.year);
-  const [gregMonth, setGregMonth] = useState(today.gregorian.month - 1);
-
-  const goPrev = () => {
-    if (hijriMonth === 1) {
-      setHijriMonth(12);
-      setHijriYear(hijriYear - 1);
-    } else {
-      setHijriMonth(hijriMonth - 1);
-    }
-    if (gregMonth === 0) {
-      setGregMonth(11);
-      setGregYear(gregYear - 1);
-    } else {
-      setGregMonth(gregMonth - 1);
-    }
-  };
-
-  const goNext = () => {
-    if (hijriMonth === 12) {
-      setHijriMonth(1);
-      setHijriYear(hijriYear + 1);
-    } else {
-      setHijriMonth(hijriMonth + 1);
-    }
-    if (gregMonth === 11) {
-      setGregMonth(0);
-      setGregYear(gregYear + 1);
-    } else {
-      setGregMonth(gregMonth + 1);
-    }
-  };
-
-  const goToday = () => {
-    setHijriYear(today.hijri.year);
-    setHijriMonth(today.hijri.month);
-    setGregYear(today.gregorian.year);
-    setGregMonth(today.gregorian.month - 1);
-  };
-
-  return (
-    <div className="space-y-3">
-      <CalendarMonthCard
-        header={
-          <CalendarHeader
-            subtitle="🌙 Hijriah"
-            subtitleClassName="text-violet-600 dark:text-violet-400"
-            title={`${HIJRI_MONTH_NAMES_ID[hijriMonth]} ${hijriYear} H`}
-            onPrev={goPrev}
-            onNext={goNext}
-          />
-        }
-      >
-        <HijriahMonthGrid
-          hijriYear={hijriYear}
-          hijriMonth={hijriMonth}
-          todayHijri={today.hijri}
-        />
-      </CalendarMonthCard>
-
-      <CalendarMonthCard
-        header={
-          <CalendarHeader
-            subtitle="📅 Masehi"
-            subtitleClassName="text-emerald-600 dark:text-emerald-400"
-            title={`${GREGORIAN_MONTH_NAMES[gregMonth]} ${gregYear}`}
-            onPrev={goPrev}
-            onNext={goNext}
-            showTodayButton
-            onToday={goToday}
-          />
-        }
-      >
-        <GregorianMonthGrid
-          gregYear={gregYear}
-          gregMonth={gregMonth}
-          todayGreg={today.gregorian}
-          monthName={GREGORIAN_MONTH_NAMES[gregMonth]}
-        />
-      </CalendarMonthCard>
-
-      <CalendarLegend />
-    </div>
   );
 }
