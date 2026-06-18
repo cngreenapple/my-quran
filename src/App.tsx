@@ -13,8 +13,13 @@ import { AppSettingsProvider } from "@/hooks/use-app-settings";
 import { BookmarkProvider } from "@/hooks/use-bookmarks";
 import { NotesProvider } from "@/hooks/use-notes";
 import { AppDrawer } from "@/components/AppDrawer";
+import { PWAStatusBar } from "@/components/PWAStatusBar";
 import { SurahListSkeleton } from "@/components/LoadingSkeleton";
 
+/**
+ * QueryClient: default 5 min staleTime, no refetch on focus, retry 1x.
+ * Override per-query: useSurahList (24h), useSurahDetail (1h), usePrayerTimes (1h).
+ */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -25,6 +30,10 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * Code splitting: setiap halaman lazy-loaded, di-chunk terpisah.
+ * User hanya download chunk saat pertama kali navigate ke halaman tsb.
+ */
 const Index = lazy(() => import("./pages/Index"));
 const SuratDetail = lazy(() => import("./pages/SuratDetail"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -42,16 +51,21 @@ const AboutPage = lazy(() => import("./pages/AboutPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 /**
- * Komponen yang listen route change dan stop semua audio.
- * Menggunakan ref pattern untuk menghindari re-trigger saat audio state berubah.
- * Harus di dalam BrowserRouter agar bisa pakai useLocation.
+ * Stop semua audio (full surah + per-ayat) saat route berubah.
+ *
+ * Pattern ref-based: ref selalu menyimpan callback TERBARU dari context,
+ * tapi useEffect HANYA trigger saat location.pathname berubah.
+ * Tanpa pattern ini, useEffect akan re-trigger setiap kali audio state
+ * berubah (isPlaying, progress, dll) → audio akan di-stop terus-menerus
+ * bahkan saat user tidak navigasi.
+ *
+ * Harus di dalam BrowserRouter untuk akses useLocation.
  */
 function RouteAudioStopper() {
   const location = useLocation();
   const surahAudio = useAudio();
   const ayatAudio = useAyatAudio();
 
-  // Simpan reference fungsi stop terbaru di ref
   const stopSurahRef = useRef(surahAudio.stop);
   const stopAyatRef = useRef(ayatAudio.stop);
 
@@ -63,7 +77,6 @@ function RouteAudioStopper() {
     stopAyatRef.current = ayatAudio.stop;
   }, [ayatAudio.stop]);
 
-  // Hanya re-trigger saat route change
   useEffect(() => {
     stopSurahRef.current();
     stopAyatRef.current();
@@ -79,6 +92,7 @@ function AppShell() {
     <>
       <AppDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
       <RouteAudioStopper />
+      <PWAStatusBar />
       <Suspense
         fallback={
           <div className="min-h-screen bg-background">
@@ -155,6 +169,26 @@ function AppShell() {
   );
 }
 
+/**
+ * Provider order (outermost → innermost):
+ *
+ * 1. QueryClient        — TanStack Query untuk data fetching (surah list, detail, prayer times)
+ * 2. AppSettings        — theme, showTransliteration, showVerseOfTheDay
+ * 3. ReadingStats       — streak, history bacaan
+ * 4. LastRead           — "Lanjutkan membaca" card
+ * 5. Bookmark           — ayat yang di-bookmark
+ * 6. Notes              — catatan pribadi per ayat
+ * 7. Dzikir             — counter dzikir
+ * 8. Audio              — full surah murottal playback
+ * 9. AyatAudio          — per-ayat playback (koordinasi via audio-coordinator.ts)
+ * 10. Tooltip           — Radix UI tooltip provider
+ * 11. Toaster/Sonner    — toast notifications
+ * 12. BrowserRouter     — routing
+ *
+ * Catatan: Toaster/Sonner di DALAM BrowserRouter? Tidak — di LUAR.
+ * shadcn ToastViewport di-render via Portal ke document.body, jadi posisinya
+ * di body, bukan di dalam React tree. Order ini hanya mengatur React context.
+ */
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppSettingsProvider>

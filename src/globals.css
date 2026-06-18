@@ -162,6 +162,23 @@ section[data-sonner-toaster] > * {
   pointer-events: auto !important;
 }
 
+/* =============================================
+   PWA offline mode: push Header down
+   =============================================
+   Saat user offline, offline indicator (40px) muncul di top dengan z-[1100].
+   Header (sticky top-0) default ada di z-1000 di belakang indicator.
+   
+   Solusi: set data-offline="true" di <html> saat offline, lalu CSS rule
+   ini push Header ke top: 40px supaya menu icon tetap clickable.
+   
+   Header di-render via Portal ke document.body, tapi Portal tidak membuat
+   stacking context baru — element tetap di body, jadi `html header` bisa
+   match via descendant selector.
+*/
+html[data-offline="true"] header {
+  top: 40px !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

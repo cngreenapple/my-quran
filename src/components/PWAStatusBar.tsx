@@ -4,17 +4,46 @@ import { Button } from "@/components/ui/button";
 import { usePWA } from "@/hooks/use-pwa";
 import { cn } from "@/lib/utils";
 
+/**
+ * PWA Status Bar
+ *
+ * Merender 3 elemen PWA secara global:
+ * 1. Offline indicator (top, full-width, amber bar) — muncul saat navigator.onLine === false
+ * 2. Install banner (bottom, card) — muncul 3 detik setelah beforeinstallprompt fired
+ * 3. Update notification (toast) — di-trigger dari usePWA hook saat SW baru tersedia
+ *
+ * Z-index strategy:
+ * - Header menggunakan z-[1000] (Portal ke document.body)
+ * - AudioPlayer menggunakan z-50
+ * - PWAStatusBar menggunakan z-[1100] untuk pastikan SELALU di atas
+ *
+ * Offline indicator push-down: saat offline, set data-offline="true" di <html>.
+ * CSS di globals.css rule `html[data-offline="true"] header { top: 40px }` akan
+ * push Header ke bawah 40px sehingga menu icon tetap clickable.
+ */
 export function PWAStatusBar() {
   const { isOnline, isInstallable, isInstalled, promptInstall } = usePWA();
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
+  // Push Header down saat offline supaya menu icon tidak tertutup indicator
   useEffect(() => {
-    // Show install banner if installable and not already installed
+    const html = document.documentElement;
+    if (!isOnline) {
+      html.dataset.offline = "true";
+    } else {
+      delete html.dataset.offline;
+    }
+    return () => {
+      delete html.dataset.offline;
+    };
+  }, [isOnline]);
+
+  // Tunda 3 detik sebelum munculkan install banner (non-intrusive)
+  useEffect(() => {
     if (isInstallable && !isInstalled) {
       const wasDismissed = sessionStorage.getItem("pwa-install-dismissed");
       if (!wasDismissed) {
-        // Delay to not be intrusive
         const timer = setTimeout(() => setShowInstallBanner(true), 3000);
         return () => clearTimeout(timer);
       }
@@ -29,10 +58,10 @@ export function PWAStatusBar() {
 
   return (
     <>
-      {/* Offline indicator */}
+      {/* Offline indicator - top, full-width, amber bar */}
       {!isOnline && (
         <div
-          className="fixed top-0 left-0 right-0 z-[60] bg-amber-500 text-white px-4 py-2 text-center text-sm font-medium shadow-md"
+          className="fixed top-0 left-0 right-0 z-[1100] bg-amber-500 text-white px-4 py-2 text-center text-sm font-medium shadow-md"
           role="status"
           aria-live="polite"
         >
@@ -43,10 +72,12 @@ export function PWAStatusBar() {
         </div>
       )}
 
-      {/* Install PWA banner */}
+      {/* Install PWA banner - bottom, above AudioPlayer */}
       {showInstallBanner && !dismissed && (
         <div
-          className="fixed left-2 right-2 sm:left-4 sm:right-4 z-50 bottom-20 md:bottom-4 animate-fade-in"
+          className={cn(
+            "fixed left-2 right-2 sm:left-4 sm:right-4 z-[1100] bottom-24 md:bottom-20 animate-fade-in",
+          )}
           role="dialog"
           aria-labelledby="pwa-install-title"
         >
@@ -58,7 +89,10 @@ export function PWAStatusBar() {
               <Download className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p id="pwa-install-title" className="font-semibold text-sm text-foreground">
+              <p
+                id="pwa-install-title"
+                className="font-semibold text-sm text-foreground"
+              >
                 Install Al-Quran Digital
               </p>
               <p className="text-xs text-muted-foreground">
