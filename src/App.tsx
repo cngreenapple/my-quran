@@ -41,7 +41,6 @@ const PrayerTimes = lazy(() => import("./pages/PrayerTimes"));
 const Dzikir = lazy(() => import("./pages/Dzikir"));
 const Doa = lazy(() => import("./pages/Doa"));
 const AsmaulHusna = lazy(() => import("./pages/AsmaulHusna"));
-const Kalender = lazy(() => import("./pages/Kalender"));
 const BookmarkPage = lazy(() => import("./pages/BookmarkPage"));
 const NotesPage = lazy(() => import("./pages/NotesPage"));
 const QiblaPage = lazy(() => import("./pages/QiblaPage"));
@@ -126,10 +125,6 @@ function AppShell() {
           <Route
             path="/asmaul-husna"
             element={<AsmaulHusna onMenuClick={() => setDrawerOpen(true)} />}
-          />
-          <Route
-            path="/kalender"
-            element={<Kalender onMenuClick={() => setDrawerOpen(true)} />}
           />
           <Route
             path="/bookmark"

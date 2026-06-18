@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Search, BookOpen, Clock, BookHeart, Hand, Star, Calendar,
+  Search, BookOpen, Clock, BookHeart, Hand, Star,
   Compass, Moon, ArrowRight,
 } from "lucide-react";
 import { Header } from "@/components/Header";
@@ -18,7 +18,7 @@ import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { ASMAUL_HUSNA } from "@/data/asmaul-husna";
-import { getTodayInfo, formatFullDate } from "@/lib/hijri-calendar";
+import { getTodayInfo, formatFullDate } from "@/lib/hijri";
 import { cn } from "@/lib/utils";
 
 interface IndexProps {
@@ -31,7 +31,6 @@ const QUICK_ACTIONS = [
   { to: "/doa", label: "Doa", icon: Hand, color: "violet" },
   { to: "/asmaul-husna", label: "Asmaul", icon: Star, color: "rose" },
   { to: "/arah-kiblat", label: "Kiblat", icon: Compass, color: "sky" },
-  { to: "/kalender", label: "Kalender", icon: Calendar, color: "emerald" },
   { to: "/puasa-sunnah", label: "Puasa", icon: Moon, color: "violet" },
   { to: "/bookmark", label: "Bookmark", icon: BookOpen, color: "amber" },
 ] as const;
@@ -140,7 +139,7 @@ export default function Index({ onMenuClick }: IndexProps) {
         <section className="mb-4" aria-label="Akses cepat">
           <nav aria-label="Menu akses cepat">
             <ul
-              className="grid grid-cols-4 sm:grid-cols-8 gap-2"
+              className="grid grid-cols-4 sm:grid-cols-7 gap-2"
               role="list"
             >
               {QUICK_ACTIONS.map((action) => {
