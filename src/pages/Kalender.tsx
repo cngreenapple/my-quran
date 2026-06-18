@@ -140,16 +140,63 @@ export default function Kalender({ onMenuClick }: KalenderProps) {
               </Card>
             )}
 
+            {/* Legend - updated untuk match visual baru */}
             <Card className="border-border/60">
               <CardContent className="p-4">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Keterangan</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-primary" aria-hidden="true" /><span>Hari ini</span></div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200" aria-hidden="true" /><span>Jumat</span></div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-muted" aria-hidden="true" /><span>Weekend</span></div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/30" aria-hidden="true" /><span>Hari besar</span></div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-violet-500/15 ring-1 ring-violet-500/30" aria-hidden="true" /><span>Puasa sunnah</span></div>
-                  <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-sky-500/15 ring-1 ring-sky-500/30" aria-hidden="true" /><span>Senin/Kamis</span></div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-2.5 text-xs">
+                  {/* Hari ini - primary gradient */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-md bg-gradient-to-br from-primary to-emerald-700 ring-2 ring-primary/40 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>Hari ini</span>
+                  </div>
+                  {/* Hari besar - colored bg dengan ring */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-md bg-emerald-500/15 ring-1 ring-emerald-500/40 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>Hari besar</span>
+                  </div>
+                  {/* Puasa sunnah - vertical accent bar (kiri cell) */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="relative w-5 h-5 rounded-md border border-border/40 bg-card shrink-0"
+                      aria-hidden="true"
+                    >
+                      <div className="absolute left-0 top-1 bottom-1 w-1 bg-violet-500 rounded-r-full" />
+                    </div>
+                    <span>Puasa sunnah</span>
+                  </div>
+                  {/* Jumat - subtle emerald bg */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-md bg-emerald-50/70 dark:bg-emerald-950/25 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>Jumat</span>
+                  </div>
+                  {/* Weekend - muted bg */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-5 h-5 rounded-md bg-muted/40 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>Weekend</span>
+                  </div>
+                  {/* Marker emoji di bawah cell */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="relative w-5 h-5 rounded-md border border-border/40 bg-card shrink-0"
+                      aria-hidden="true"
+                    >
+                      <span className="absolute bottom-0 left-0 right-0 text-center text-[8px] leading-none pb-0.5">🌙</span>
+                    </div>
+                    <span>Marker di bawah</span>
+                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/40 text-[11px] text-muted-foreground leading-relaxed">
                   <p className="flex items-start gap-1.5">
