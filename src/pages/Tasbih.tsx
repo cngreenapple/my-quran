@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
+  ArrowUp,
   Hand,
   Sparkles,
   Check,
@@ -47,6 +48,7 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
 
   const [activePresetId, setActivePresetId] = useState<string>(TASBIH_PRESETS[0].id);
   const [confirmResetAllOpen, setConfirmResetAllOpen] = useState(false);
+  const [showJumpToTop, setShowJumpToTop] = useState(false);
 
   const activePreset = useMemo(
     () => TASBIH_PRESETS.find((p) => p.id === activePresetId) ?? TASBIH_PRESETS[0],
@@ -64,6 +66,27 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
       return s.current >= s.target;
     }).length;
   }, [getState, totalCyclesToday]);
+
+  // Jump-to-top visibility — pakai main element scroll listener
+  useEffect(() => {
+    const mainEl = document.querySelector("main");
+    if (!mainEl) return;
+
+    const handleScroll = () => {
+      setShowJumpToTop(mainEl.scrollTop > 300);
+    };
+
+    handleScroll(); // Initial check (untuk handle reload saat di-scroll)
+    mainEl.addEventListener("scroll", handleScroll, { passive: true });
+    return () => mainEl.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleJumpToTop = () => {
+    const mainEl = document.querySelector("main");
+    if (mainEl) {
+      mainEl.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const handleResetAllConfirm = () => {
     resetAll();
@@ -98,9 +121,6 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
             <Hand className="w-6 h-6 text-primary" aria-hidden="true" />
             Tasbih Digital
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Tap untuk hitung. Getar otomatis setiap kali target tercapai (33x, 66x, 99x, ...).
-          </p>
         </section>
 
         {/* Stats ringkasan */}
@@ -256,6 +276,18 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
           </CardContent>
         </Card>
       </main>
+
+      {/* Jump-to-top button — muncul saat scroll > 300px */}
+      {showJumpToTop && (
+        <button
+          type="button"
+          onClick={handleJumpToTop}
+          className="fixed bottom-24 right-4 z-30 w-11 h-11 rounded-2xl bg-card border border-border shadow-xl flex items-center justify-center hover:bg-muted active:scale-95 transition-all"
+          aria-label="Scroll ke atas"
+        >
+          <ArrowUp className="w-5 h-5 text-foreground" aria-hidden="true" />
+        </button>
+      )}
 
       <AlertDialog open={confirmResetAllOpen} onOpenChange={setConfirmResetAllOpen}>
         <AlertDialogContent className="rounded-2xl">
