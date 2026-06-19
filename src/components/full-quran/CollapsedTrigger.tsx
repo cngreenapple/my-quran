@@ -7,10 +7,6 @@ interface CollapsedTriggerProps {
   className?: string;
 }
 
-/**
- * Tombol trigger yang tampil saat panel collapsed dan queue belum aktif.
- * Tap untuk buka panel & show range picker.
- */
 export function CollapsedTrigger({ onClick, className }: CollapsedTriggerProps) {
   return (
     <Button

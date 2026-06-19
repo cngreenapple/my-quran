@@ -4,19 +4,13 @@ import { cn } from "@/lib/utils";
 import type { Surah } from "@/types/quran";
 
 interface PlayerHeaderProps {
-  /** Surah info yang sedang diputar (null = tidak ada) */
   currentSurah: Surah | null | undefined;
-  /** Queue progress "1/114" */
   currentIndex: number;
   totalInQueue: number;
-  /** Queue aktif? */
   isActive: boolean;
-  /** Dropdown state */
   isDropdownOpen: boolean;
   onToggleDropdown: () => void;
-  /** Stop queue */
   onStop: () => void;
-  /** Expand/collapse panel */
   expanded: boolean;
   onToggleExpanded: () => void;
 }

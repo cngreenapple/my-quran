@@ -45,10 +45,6 @@ export function FullQuranPlayer({ className }: FullQuranPlayerProps) {
     toggleExpanded,
   } = useFullQuranPlayer();
 
-  /**
-   * Map queue numbers ke full surah info untuk dropdown.
-   * Memoized dengan deps yang relevan.
-   */
   const queueItems: QueueDropdownItem[] = useMemo(() => {
     if (!surahList) return [];
     return queue.queue.map((nomor, idx) => {
@@ -75,10 +71,6 @@ export function FullQuranPlayer({ className }: FullQuranPlayerProps) {
     items: queueItems,
   });
 
-  /**
-   * Jump ke surah di queue + close dropdown.
-   * Wrap dari useCallback supaya tidak re-create tiap render.
-   */
   const handleItemClick = useCallback(
     (queueIndex: number) => {
       queue.jumpTo(queueIndex);
@@ -87,7 +79,6 @@ export function FullQuranPlayer({ className }: FullQuranPlayerProps) {
     [queue, dropdown],
   );
 
-  // Collapsed: queue inactive & panel closed
   if (!queue.isActive && !expanded) {
     return <CollapsedTrigger onClick={toggleExpanded} className={className} />;
   }

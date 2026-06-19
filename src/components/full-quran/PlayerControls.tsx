@@ -7,7 +7,6 @@ interface PlayerControlsProps {
   isPlaying: boolean;
   isLoading: boolean;
   onTogglePlay: () => void;
-  // Queue controls
   canGoPrev: boolean;
   onPrev: () => void;
   canGoNext: boolean;

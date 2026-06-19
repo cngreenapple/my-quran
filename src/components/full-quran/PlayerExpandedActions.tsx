@@ -4,7 +4,6 @@ import { RangePicker } from "./RangePicker";
 
 interface PlayerExpandedActionsProps {
   isSurahListLoading: boolean;
-  // Range picker state
   showRangePicker: boolean;
   fromNomor: number;
   toNomor: number;
@@ -14,7 +13,6 @@ interface PlayerExpandedActionsProps {
   onToChange: (n: number) => void;
   onPlayFull: () => void;
   onPlayRange: () => void;
-  // For RangePicker lookups
   surahList: { nomor: number; namaLatin: string; tempatTurun?: string; jumlahAyat?: number }[] | undefined;
 }
 

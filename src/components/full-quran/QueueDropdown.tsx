@@ -26,13 +26,6 @@ interface QueueDropdownProps {
   playingSurahNumber: number | null;
 }
 
-/**
- * Dropdown list antrian surah — di-render via portal supaya tidak ter-clip
- * oleh `overflow-hidden` di parent Card.
- *
- * Search by nama latin, nomor, tempat turun, atau nama arab.
- * Current item di-highlight + auto-scrolled ke tengah list saat mount.
- */
 export function QueueDropdown({
   open,
   position,
@@ -44,10 +37,6 @@ export function QueueDropdown({
   onItemClick,
   playingSurahNumber,
 }: QueueDropdownProps) {
-  /**
-   * Filter items by search query.
-   * Memoized supaya tidak re-compute pada setiap render.
-   */
   const filteredItems = useMemo(() => {
     if (!search.trim()) return items;
     const q = search.toLowerCase();
@@ -74,7 +63,6 @@ export function QueueDropdown({
       role="listbox"
       aria-label="Antrian surah"
     >
-      {/* Header dengan search */}
       <div className="px-3 py-2.5 border-b border-border/60 bg-gradient-to-br from-emerald-500/8 to-transparent">
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
@@ -101,7 +89,6 @@ export function QueueDropdown({
         </div>
       </div>
 
-      {/* List dengan scroll */}
       <div
         ref={listRef}
         className="overflow-y-auto p-1.5"
