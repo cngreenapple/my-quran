@@ -110,9 +110,13 @@ interface TasbihContextValue {
   states: Record<string, TasbihState>;
   /** Get current state untuk preset, atau reset ke 0 kalau beda hari */
   getState: (preset: TasbihPreset) => TasbihState;
-  /** Increment counter preset by 1 (kalau belum reach target) */
-  increment: (preset: TasbihPreset) => void;
-  /** Reset counter preset ke 0 (dateKey tetap hari ini, totalCycles naik kalau sebelumnya completed) */
+  /**
+   * Increment counter preset by 1.
+   * Returns `true` kalau baru saja reach target (just-completed event).
+   * Caller pakai ini untuk trigger celebration haptic.
+   */
+  increment: (preset: TasbihPreset) => boolean;
+  /** Reset counter preset ke 0 */
   reset: (preset: TasbihPreset) => void;
   /** Reset semua counters */
   resetAll: () => void;
@@ -138,14 +142,13 @@ export function TasbihProvider({ children }: { children: ReactNode }) {
     (preset: TasbihPreset): TasbihState => {
       const today = getTodayKey();
       const existing = states[preset.id];
-      // Auto-reset kalau dateKey != today (hari sudah berganti)
       if (existing && existing.dateKey !== today) {
         return {
           presetId: preset.id,
           current: 0,
           target: preset.target,
           dateKey: today,
-          totalCycles: existing.totalCycles, // preserve historical
+          totalCycles: existing.totalCycles,
         };
       }
       if (existing) return existing;
@@ -160,14 +163,16 @@ export function TasbihProvider({ children }: { children: ReactNode }) {
     [states],
   );
 
-  const increment = useCallback((preset: TasbihPreset) => {
+  const increment = useCallback((preset: TasbihPreset): boolean => {
+    let justCompleted = false;
     setStates((prev) => {
       const today = getTodayKey();
       const existing = prev[preset.id];
-      const wasComplete = existing?.current >= preset.target;
+      const wasComplete = existing ? existing.current >= preset.target : false;
       const baseCurrent = existing && existing.dateKey === today ? existing.current : 0;
       const next = baseCurrent + 1;
-      const justCompleted = !wasComplete && next >= preset.target;
+      // Detect transition: was NOT complete, NOW reaching target
+      justCompleted = !wasComplete && next >= preset.target;
       return {
         ...prev,
         [preset.id]: {
@@ -175,11 +180,11 @@ export function TasbihProvider({ children }: { children: ReactNode }) {
           current: next,
           target: preset.target,
           dateKey: today,
-          totalCycles:
-            (existing?.totalCycles ?? 0) + (justCompleted ? 1 : 0),
+          totalCycles: (existing?.totalCycles ?? 0) + (justCompleted ? 1 : 0),
         },
       };
     });
+    return justCompleted;
   }, []);
 
   const reset = useCallback((preset: TasbihPreset) => {

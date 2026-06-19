@@ -71,6 +71,17 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
     setConfirmResetAllOpen(false);
   };
 
+  /**
+   * Wrapper untuk increment — return value diabaikan di sini.
+   * TasbihDial handle celebration haptic-nya sendiri berdasarkan `isComplete`
+   * transition (lihat useEffect dengan wasCompleteRef).
+   *
+   * Kita tetap pakai boolean return untuk dokumentasi API contract.
+   */
+  const handleIncrement = () => {
+    increment(activePreset);
+  };
+
   return (
     <div className="min-h-dvh bg-background">
       <Header onMenuClick={onMenuClick} />
@@ -212,7 +223,7 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
                 current={state.current}
                 target={activePreset.target}
                 color={activePreset.color}
-                onTap={() => increment(activePreset)}
+                onTap={handleIncrement}
                 onReset={() => reset(activePreset)}
                 isComplete={isComplete}
               />
