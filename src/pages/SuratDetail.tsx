@@ -6,7 +6,6 @@ import { Header } from "@/components/Header";
 import { VerseCard } from "@/components/VerseCard";
 import { SurahDetailSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { useSurahDetail } from "@/hooks/use-surah-detail";
 import { useTafsirSurah } from "@/hooks/use-tafsir";
 import { useLastRead } from "@/hooks/use-last-read";
@@ -94,7 +93,6 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           </Button>
           <ErrorState title="Nomor Surat Tidak Valid" message="Nomor surat harus antara 1 sampai 114." />
         </main>
-        <AudioPlayer />
       </div>
     );
   }
@@ -120,7 +118,6 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           </Button>
           <ErrorState title="Gagal Memuat Surat" message="Terjadi kesalahan. Silakan coba lagi." onRetry={() => refetch()} />
         </main>
-        <AudioPlayer />
       </div>
     );
   }
@@ -136,7 +133,6 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           </Link>
         </Button>
 
-        {/* Hero - compact */}
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-4 sm:p-5 shadow-lg shadow-emerald-500/20 mb-4">
           <div className="absolute inset-0 opacity-[0.07]" aria-hidden="true">
             <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
@@ -201,7 +197,6 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           </div>
         </section>
 
-        {/* Bismillah (compact) */}
         {data.nomor !== 1 && data.nomor !== 9 && (
           <div className="text-center mb-4 py-2.5 border-y border-border/60">
             <p className="font-arabic text-2xl text-primary leading-relaxed" dir="rtl" lang="ar" aria-label="Bismillahirrahmanirrahim">
@@ -223,7 +218,6 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           ))}
         </div>
       </main>
-      <AudioPlayer />
     </div>
   );
 }

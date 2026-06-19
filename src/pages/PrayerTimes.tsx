@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { PrayerCard } from "@/components/PrayerCard";
 import { QiblaCompass } from "@/components/QiblaCompass";
 import { ErrorState } from "@/components/ErrorState";
@@ -57,7 +56,6 @@ export default function PrayerTimes({ onMenuClick }: PrayerTimesProps) {
           <p className="text-xs text-muted-foreground mt-0.5">Waktu sholat dan arah kiblat untuk lokasi Anda</p>
         </section>
 
-        {/* Location card (compact) */}
         <section className="mb-4" aria-label="Lokasi saat ini">
           <Card className="border-border/60 overflow-hidden">
             <CardContent className="p-3.5">
@@ -112,7 +110,6 @@ export default function PrayerTimes({ onMenuClick }: PrayerTimesProps) {
               </div>
             ) : (
               <>
-                {/* Next prayer card (compact) */}
                 {nextPrayer && (
                   <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent overflow-hidden">
                     <CardContent className="p-4 sm:p-5 relative">
@@ -184,7 +181,6 @@ export default function PrayerTimes({ onMenuClick }: PrayerTimesProps) {
           </TabsContent>
         </Tabs>
       </main>
-      <AudioPlayer />
     </div>
   );
 }

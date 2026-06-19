@@ -13,7 +13,6 @@ import { VerseOfTheDay } from "@/components/VerseOfTheDay";
 import { IslamicCalendarCard } from "@/components/IslamicCalendarCard";
 import { SurahListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { FullQuranPlayer } from "@/components/full-quran/FullQuranPlayer";
 import { useSurahList } from "@/hooks/use-surah-list";
 import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
@@ -137,7 +136,6 @@ export default function Index({ onMenuClick }: IndexProps) {
           </div>
         </section>
 
-        {/* Mode Baca Full — letak di atas quick actions supaya user lihat duluan */}
         <section className="mb-3" aria-label="Mode baca Al-Qur'an full">
           <FullQuranPlayer />
         </section>
@@ -277,8 +275,6 @@ export default function Index({ onMenuClick }: IndexProps) {
           )}
         </section>
       </main>
-
-      <AudioPlayer />
     </div>
   );
 }

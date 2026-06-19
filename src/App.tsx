@@ -13,6 +13,8 @@ import { AppSettingsProvider } from "@/hooks/use-app-settings";
 import { BookmarkProvider } from "@/hooks/use-bookmarks";
 import { NotesProvider } from "@/hooks/use-notes";
 import { AppDrawer } from "@/components/AppDrawer";
+import { AudioPlayer } from "@/components/AudioPlayer";
+import { PWAStatusBar } from "@/components/PWAStatusBar";
 import { SurahListSkeleton } from "@/components/LoadingSkeleton";
 
 const queryClient = new QueryClient({
@@ -59,7 +61,15 @@ function AppShell() {
     <>
       <AppDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
       <RouteAudioStopper />
-      <Suspense fallback={<div className="min-h-screen bg-background"><div className="container mx-auto px-4 py-6 max-w-5xl"><SurahListSkeleton count={6} /></div></div>}>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-background">
+            <div className="container mx-auto px-4 py-6 max-w-5xl">
+              <SurahListSkeleton count={6} />
+            </div>
+          </div>
+        }
+      >
         <Routes>
           <Route path="/" element={<Index onMenuClick={() => setDrawerOpen(true)} />} />
           <Route path="/surat/:id" element={<SuratDetail onMenuClick={() => setDrawerOpen(true)} />} />
@@ -79,6 +89,10 @@ function AppShell() {
           <Route path="*" element={<NotFound onMenuClick={() => setDrawerOpen(true)} />} />
         </Routes>
       </Suspense>
+
+      {/* Global persistent UI — mounted sekali, tidak re-mount tiap navigasi */}
+      <AudioPlayer />
+      <PWAStatusBar />
     </>
   );
 }

@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Search, Bookmark as BookmarkIcon, Trash2, BookOpen, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -117,8 +116,6 @@ export default function BookmarkPage({ onMenuClick }: BookmarkPageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AudioPlayer />
     </div>
   );
 }

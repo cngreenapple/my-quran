@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Search, StickyNote, Trash2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { NoteCard } from "@/components/NoteCard";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -88,8 +87,6 @@ export default function NotesPage({ onMenuClick }: NotesPageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AudioPlayer />
     </div>
   );
 }
