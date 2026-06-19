@@ -27,23 +27,36 @@ interface IndexProps {
 }
 
 const QUICK_ACTIONS = [
-  { to: "/jadwal-sholat", label: "Sholat", icon: Clock, color: "emerald" },
-  { to: "/dzikir", label: "Dzikir", icon: BookHeart, color: "amber", badgeKey: "dzikir" as const },
-  { to: "/tasbih", label: "Tasbih", icon: CircleDot, color: "violet" },
-  { to: "/doa", label: "Doa", icon: Hand, color: "violet" },
-  { to: "/asmaul-husna", label: "Asmaul", icon: Star, color: "rose" },
-  { to: "/arah-kiblat", label: "Kiblat", icon: Compass, color: "sky" },
-  { to: "/kalender", label: "Kalender", icon: Calendar, color: "violet" },
-  { to: "/puasa-sunnah", label: "Puasa", icon: Moon, color: "violet" },
-  { to: "/bookmark", label: "Bookmark", icon: BookOpen, color: "amber" },
+  { to: "/jadwal-sholat", label: "Sholat", icon: Clock, color: "sky" },
+  { to: "/dzikir", label: "Dzikir", icon: BookHeart, color: "emerald", badgeKey: "dzikir" as const },
+  { to: "/tasbih", label: "Tasbih", icon: CircleDot, color: "rose" },
+  { to: "/doa", label: "Doa", icon: Hand, color: "amber" },
+  { to: "/asmaul-husna", label: "Asmaul", icon: Star, color: "violet" },
+  { to: "/arah-kiblat", label: "Kiblat", icon: Compass, color: "teal" },
+  { to: "/kalender", label: "Kalender", icon: Calendar, color: "indigo" },
+  { to: "/puasa-sunnah", label: "Puasa", icon: Moon, color: "fuchsia" },
+  { to: "/bookmark", label: "Bookmark", icon: BookOpen, color: "orange" },
 ] as const;
 
 const colorMap = {
-  emerald: { bg: "bg-emerald-500/8", text: "text-emerald-600 dark:text-emerald-400", grad: "from-emerald-500 to-emerald-700" },
-  amber: { bg: "bg-amber-500/8", text: "text-amber-600 dark:text-amber-400", grad: "from-amber-500 to-amber-700" },
+  // Biru cerah — Sholat (waktu, langit, ketenangan)
   sky: { bg: "bg-sky-500/8", text: "text-sky-600 dark:text-sky-400", grad: "from-sky-500 to-sky-700" },
+  // Hijau — Dzikir (subhanallah, primary brand)
+  emerald: { bg: "bg-emerald-500/8", text: "text-emerald-600 dark:text-emerald-400", grad: "from-emerald-500 to-emerald-700" },
+  // Merah muda — Tasbih (counter rhythmical, energy)
   rose: { bg: "bg-rose-500/8", text: "text-rose-600 dark:text-rose-400", grad: "from-rose-500 to-rose-700" },
+  // Kuning hangat — Doa (harapan, doa dipanjatkan)
+  amber: { bg: "bg-amber-500/8", text: "text-amber-600 dark:text-amber-400", grad: "from-amber-500 to-amber-700" },
+  // Ungu — Asmaul Husna (sifat-sifat Allah, misterius)
   violet: { bg: "bg-violet-500/8", text: "text-violet-600 dark:text-violet-400", grad: "from-violet-500 to-violet-700" },
+  // Hijau-biru — Kiblat (kompas, arah, navigasi)
+  teal: { bg: "bg-teal-500/8", text: "text-teal-600 dark:text-teal-400", grad: "from-teal-500 to-teal-700" },
+  // Biru tua — Kalender (terstruktur, formal)
+  indigo: { bg: "bg-indigo-500/8", text: "text-indigo-600 dark:text-indigo-400", grad: "from-indigo-500 to-indigo-700" },
+  // Pink-ungu tua — Puasa (spiritual, transformasi)
+  fuchsia: { bg: "bg-fuchsia-500/8", text: "text-fuchsia-600 dark:text-fuchsia-400", grad: "from-fuchsia-500 to-fuchsia-700" },
+  // Oranye — Bookmark (penanda, attention)
+  orange: { bg: "bg-orange-500/8", text: "text-orange-600 dark:text-orange-400", grad: "from-orange-500 to-orange-700" },
 };
 
 export default function Index({ onMenuClick }: IndexProps) {
