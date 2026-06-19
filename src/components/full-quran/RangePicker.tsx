@@ -1,4 +1,3 @@
-Sampai) dengan warning indicator. Tampilkan dalam emerald card aesthetic.">
 import { useMemo } from "react";
 import { ChevronDown, ChevronUp, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ export function RangePicker({
   onCancel,
   surahList,
 }: RangePickerProps) {
-  // Lookup nama latin dari nomor
   const fromSurah = useMemo(
     () => surahList?.find((s) => s.nomor === fromNomor),
     [surahList, fromNomor],
@@ -66,7 +64,6 @@ export function RangePicker({
         />
       </div>
 
-      {/* Ringkasan rentang */}
       <div className="rounded-xl bg-emerald-500/8 border border-emerald-500/20 px-2.5 py-2 space-y-0.5">
         <p className="text-[10px] text-muted-foreground leading-tight">
           Akan memutar {totalCount} surah:
@@ -113,7 +110,6 @@ export function RangePicker({
 interface RangeStepperProps {
   label: string;
   value: number;
-  /** Nama latin surah — tampil di bawah angka */
   namaLatin?: string;
   onChange: (n: number) => void;
 }
