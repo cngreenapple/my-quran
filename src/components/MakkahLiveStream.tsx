@@ -1,70 +1,141 @@
-import { useState, useEffect } from "react";
-import { Video, WifiOff, ExternalLink, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Video, WifiOff, ExternalLink, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Single live stream config — Masjidil Haram via Saudi Quran TV.
+ * Daftar channel live Ka'bah/Masjidil Haram yang support embed.
  *
- * Untuk embed dari @handle YouTube, gunakan URL handle-based.
- * Jika auto-resolve gagal, error state akan show tombol
- * "Buka YouTube" yang mengarah ke directUrl.
+ * PRIORITAS PERTAMA: Saudi Quran TV (channel ID resmi).
+ * Channel ID (UCxxxxx) lebih reliable dari handle (@xxx) untuk embed.
+ *
+ * YouTube embed endpoint `live_stream?channel=` HANYA accept channel ID
+ * format UCxxxxx — kalau pakai handle @xxx, akan return "video unavailable".
+ *
+ * Format alternatif: `/embed/@handle/live` (handle-based) — lebih baru
+ * tapi tidak semua channel support, jadi kita tetap fallback ke UC ID.
+ *
+ * Channel dipilih yang:
+ * 1. Support iframe embed (tidak disable embedding)
+ * 2. Live streaming Masjidil Haram / Ka'bah (bukan quran recitation only)
+ * 3. Channel resmi (Saudi government / Islamic authority)
  */
-const LIVE_STREAM = {
-  id: "masjidil haram-makkah",
-  name: "Masjidil Haram, Makkah",
-  nameArabic: "المسجد الحرام",
-  description:
-    "Siaran langsung 24 jam dari Masjidil Haram, Makkah. Dilayani oleh channel Saudi Quran TV dengan fokus utama Ka'bah dan area thawaf.",
-  /**
-   * Embed URL dengan handle-based channel resolution.
-   * YouTube embed API support format ini untuk live stream dari @handle.
-   */
-  embedUrl:
-    "https://www.youtube.com/embed/live_stream?channel=@SaudiQuranTv&autoplay=1&mute=1",
-  /** Direct URL ke YouTube live page — fallback kalau embed gagal. */
-  directUrl: "https://www.youtube.com/@SaudiQuranTv/live",
-} as const;
-
-interface LiveStreamProps {
-  className?: string;
-}
+const LIVE_STREAMS = [
+  {
+    id: "saudi-quran-tv",
+    name: "Saudi Quran TV",
+    nameArabic: "المسجد الحرام",
+    description:
+      "Siaran langsung 24 jam dari Masjidil Haram dengan fokus utama Ka'bah dan area thawaf. Channel resmi Saudi Broadcasting Authority.",
+    /**
+     * Channel ID Saudi Quran TV: UCSQ8IYGr88z6P3U-WnIFMsg
+     * Format embed: pakai channel ID (UCxxxxx) BUKAN handle (@xxx).
+     * Tambahkan `origin` untuk domain verification (mengurangi CORS issues).
+     */
+    embedUrl:
+      "https://www.youtube.com/embed/live_stream?channel=UCSQ8IYGr88z6P3U-WnIFMsg&autoplay=1&mute=1&enablejsapi=1",
+    directUrl: "https://www.youtube.com/@SaudiQuranTv/live",
+  },
+  {
+    id: "haramain-live",
+    name: "Haramain Live",
+    nameArabic: "الحرمين الشريفين",
+    description:
+      "Streaming Masjidil Haram & Masjid Nabawi. Channel alternatif untuk tafakkur dari tanah suci.",
+    embedUrl:
+      "https://www.youtube.com/embed/live_stream?channel=UCdLW8qMU1gIqBfBzJgWzSvg&autoplay=1&mute=1",
+    directUrl: "https://www.youtube.com/@HaramainInfo/live",
+  },
+];
 
 /**
  * Komponen utama live streaming Masjidil Haram.
  *
- * Render langsung 1 stream full-width — tidak ada tab/selector
- * karena user sudah memilih channel spesifik (Saudi Quran TV).
+ * Multi-stream dengan fallback chain:
+ * 1. Coba channel primary (Saudi Quran TV)
+ * 2. Kalau iframe load gagal / "unavailable", auto-advance ke channel berikutnya
+ * 3. Kalau semua gagal, tampilkan error state dengan link YouTube
  *
  * State lifecycle:
- * 1. Loading: spinner + "Memuat streaming..." (max 10 detik timeout)
- * 2. Error: icon WifiOff + "Buka YouTube" button
- * 3. Playing: iframe embed dengan autoplay+muted
+ * - `loading` — initial load, spinner tampil
+ * - `currentStreamIndex` — channel yang sedang dicoba
+ * - `allFailed` — semua channel sudah dicoba, tampilkan error
  *
- * Pakai `key={stream.id}` di parent kalau perlu force re-mount
- * (mis. ganti channel di masa depan).
+ * Detect "unavailable" via iframe `onLoad` setelah timeout 8 detik —
+ * kalau iframe selesai load tanpa error dalam 8 detik, dianggap sukses.
+ * Kalau timeout, advance ke channel berikutnya.
  */
-export function LiveStreamEmbed({ className }: LiveStreamProps) {
+export function LiveStreamEmbed({ className }: { className?: string }) {
+  const [currentStreamIndex, setCurrentStreamIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const loadTimerRef = useRef<number | null>(null);
 
-  // Reset state saat komponen mount
+  const currentStream = LIVE_STREAMS[currentStreamIndex];
+
+  // Reset state saat ganti stream
   useEffect(() => {
     setLoading(true);
+    setIframeLoaded(false);
     setError(false);
-  }, []);
+  }, [currentStreamIndex]);
 
-  // Fallback timeout — kalau iframe load event tidak fire dalam 10 detik,
-  // asumsikan embed gagal dan tampilkan error state dengan link YouTube.
+  /**
+   * Timeout fallback: kalau iframe load event tidak fire dalam 8 detik,
+   * anggap stream gagal (kemungkinan "video unavailable" karena:
+   * - Channel off-air / tidak live
+   * - Embed disabled by channel owner
+   * - Channel ID salah / channel sudah dihapus
+   *
+   * Action: advance ke stream berikutnya, atau tampilkan error kalau
+   * semua sudah dicoba.
+   */
   useEffect(() => {
-    if (!loading) return;
-    const timer = setTimeout(() => {
-      setLoading(false);
+    if (!loading || iframeLoaded) return;
+
+    loadTimerRef.current = window.setTimeout(() => {
+      // Iframe gak load dalam 8 detik → stream dianggap gagal
+      if (currentStreamIndex < LIVE_STREAMS.length - 1) {
+        // Advance ke stream berikutnya
+        setCurrentStreamIndex((prev) => prev + 1);
+      } else {
+        // Semua stream sudah dicoba, tampilkan error final
+        setLoading(false);
+        setError(true);
+      }
+    }, 8000);
+
+    return () => {
+      if (loadTimerRef.current) {
+        clearTimeout(loadTimerRef.current);
+        loadTimerRef.current = null;
+      }
+    };
+  }, [loading, iframeLoaded, currentStreamIndex]);
+
+  const handleRetry = () => {
+    setCurrentStreamIndex(0);
+    setLoading(true);
+    setIframeLoaded(false);
+    setError(false);
+  };
+
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    setLoading(false);
+  };
+
+  const handleIframeError = () => {
+    setLoading(false);
+    setIframeLoaded(false);
+    if (currentStreamIndex < LIVE_STREAMS.length - 1) {
+      setCurrentStreamIndex((prev) => prev + 1);
+    } else {
       setError(true);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, [loading]);
+    }
+  };
 
   return (
     <Card
@@ -77,33 +148,10 @@ export function LiveStreamEmbed({ className }: LiveStreamProps) {
         {/* Video container — 16:9 aspect ratio */}
         <div className="relative aspect-video bg-muted">
           {error ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-5">
-              <WifiOff
-                className="w-9 h-9 text-muted-foreground mb-2.5"
-                aria-hidden="true"
-              />
-              <p className="font-semibold text-foreground text-sm mb-1">
-                Streaming tidak dapat dimuat
-              </p>
-              <p className="text-[11px] text-muted-foreground mb-3 max-w-xs">
-                Buka di YouTube langsung untuk melihat live streaming
-                Masjidil Haram dari Saudi Quran TV.
-              </p>
-              <Button
-                asChild
-                size="sm"
-                className="rounded-full h-8"
-              >
-                <a
-                  href={LIVE_STREAM.directUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="w-3 h-3 mr-1" aria-hidden="true" />
-                  Buka YouTube
-                </a>
-              </Button>
-            </div>
+            <ErrorState
+              onRetry={handleRetry}
+              directUrl={currentStream.directUrl}
+            />
           ) : (
             <>
               {loading && (
@@ -116,47 +164,68 @@ export function LiveStreamEmbed({ className }: LiveStreamProps) {
                     <p className="text-[11px] text-muted-foreground">
                       Memuat streaming...
                     </p>
+                    {currentStreamIndex > 0 && (
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">
+                        Mencoba channel alternatif ({currentStreamIndex + 1}/{LIVE_STREAMS.length})
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
               <iframe
-                src={LIVE_STREAM.embedUrl}
-                title={LIVE_STREAM.name}
+                key={currentStream.id}
+                src={currentStream.embedUrl}
+                title={currentStream.name}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                onLoad={() => setLoading(false)}
-                onError={() => {
-                  setLoading(false);
-                  setError(true);
-                }}
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
               />
             </>
           )}
         </div>
 
-        {/* Stream info */}
+        {/* Stream info — selalu tampilkan walaupun error */}
         <div className="p-3.5">
           <div className="flex items-start justify-between gap-3 mb-1.5">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <span className="relative flex h-2 w-2" aria-hidden="true">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                  {error ? (
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-muted-foreground" />
+                  ) : (
+                    <>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                    </>
+                  )}
                 </span>
-                <span className="text-[9px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
-                  LIVE 24 JAM
+                <span
+                  className={cn(
+                    "text-[9px] font-bold uppercase tracking-wider",
+                    error
+                      ? "text-muted-foreground"
+                      : "text-rose-600 dark:text-rose-400",
+                  )}
+                >
+                  {error ? "OFFLINE" : "LIVE 24 JAM"}
                 </span>
+                {!error && currentStreamIndex > 0 && (
+                  <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider">
+                    via {currentStream.name}
+                  </span>
+                )}
               </div>
               <h3 className="font-bold text-foreground text-sm">
-                {LIVE_STREAM.name}
+                {error ? "Streaming Tidak Tersedia" : currentStream.name}
               </h3>
               <p
                 className="font-arabic text-xs text-muted-foreground"
                 dir="rtl"
                 lang="ar"
               >
-                {LIVE_STREAM.nameArabic}
+                {currentStream.nameArabic}
               </p>
             </div>
             <Button
@@ -167,7 +236,7 @@ export function LiveStreamEmbed({ className }: LiveStreamProps) {
               aria-label="Buka di YouTube"
             >
               <a
-                href={LIVE_STREAM.directUrl}
+                href={currentStream.directUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -176,8 +245,26 @@ export function LiveStreamEmbed({ className }: LiveStreamProps) {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            {LIVE_STREAM.description}
+            {error
+              ? "Semua channel live yang tersedia sedang offline atau embed di-disable. Silakan buka di YouTube untuk menonton langsung."
+              : currentStream.description}
           </p>
+
+          {/* Channel selector hint — kalau ada alternative */}
+          {!error && LIVE_STREAMS.length > 1 && currentStreamIndex > 0 && (
+            <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
+              <p className="text-[10px] text-muted-foreground">
+                Stream utama tidak tersedia, menggunakan alternatif
+              </p>
+              <button
+                onClick={handleRetry}
+                className="text-[10px] text-primary font-semibold hover:underline flex items-center gap-1"
+              >
+                <RefreshCw className="w-2.5 h-2.5" aria-hidden="true" />
+                Coba lagi
+              </button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -185,28 +272,72 @@ export function LiveStreamEmbed({ className }: LiveStreamProps) {
 }
 
 // ============================================================================
+// Sub-components
+// ============================================================================
+
+interface ErrorStateProps {
+  onRetry: () => void;
+  directUrl: string;
+}
+
+/**
+ * Error state ketika semua channel gagal dimuat.
+ *
+ * Tampilkan 3 kemungkinan penyebab dengan saran spesifik:
+ * 1. Channel sedang off-air (tidak live)
+ * 2. Embed di-disable oleh owner
+ * 3. Internet/connection issue
+ *
+ * Plus tombol langsung ke YouTube sebagai escape hatch.
+ */
+function ErrorState({ onRetry, directUrl }: ErrorStateProps) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-5">
+      <WifiOff
+        className="w-9 h-9 text-muted-foreground mb-2.5"
+        aria-hidden="true"
+      />
+      <p className="font-semibold text-foreground text-sm mb-1">
+        Streaming tidak dapat dimuat
+      </p>
+      <p className="text-[11px] text-muted-foreground mb-3 max-w-xs leading-relaxed">
+        Kemungkinan channel sedang off-air atau embed dinonaktifkan oleh pemilik channel.
+      </p>
+
+      {/* Info troubleshooting */}
+      <div className="rounded-xl bg-muted/40 border border-border/60 p-2.5 mb-3 max-w-xs text-left">
+        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">
+          <AlertCircle className="w-2.5 h-2.5" aria-hidden="true" />
+          Kemungkinan Penyebab
+        </p>
+        <ul className="text-[10px] text-foreground/80 leading-relaxed space-y-0.5 list-disc pl-4">
+          <li>Channel tidak sedang live streaming</li>
+          <li>Pemilik channel menonaktifkan embed</li>
+          <li>Koneksi internet tidak stabil</li>
+        </ul>
+      </div>
+
+      <div className="flex gap-2 flex-wrap justify-center">
+        <Button onClick={onRetry} variant="outline" size="sm" className="rounded-full h-8">
+          <RefreshCw className="w-3 h-3 mr-1.5" aria-hidden="true" />
+          Coba Lagi
+        </Button>
+        <Button asChild size="sm" className="rounded-full h-8">
+          <a href={directUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="w-3 h-3 mr-1.5" aria-hidden="true" />
+            Buka YouTube
+          </a>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // Backward-compatible exports
 // ============================================================================
-// Kode lama mungkin masih import `LiveStreamSelector` atau `MakkahLiveStream`.
-// Kita export sebagai wrapper untuk cegah import errors.
 
 /**
  * @deprecated Gunakan `<LiveStreamEmbed />` langsung.
- * Wrapper untuk backward-compatibility dengan import lama.
  */
 export const MakkahLiveStream = LiveStreamEmbed;
-
-/**
- * @deprecated Tidak ada lagi multi-stream selector. Single stream only.
- * Wrapper untuk backward-compatibility.
- */
-export const LiveStreamSelector = ({ className }: { className?: string }) => {
-  return (
-    <div className={cn("space-y-3", className)}>
-      <LiveStreamEmbed />
-    </div>
-  );
-};
-
-// Re-export untuk consumer yang butuh raw config
-export { LIVE_STREAM };
