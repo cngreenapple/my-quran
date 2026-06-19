@@ -14,6 +14,7 @@ import { IslamicCalendarCard } from "@/components/IslamicCalendarCard";
 import { SurahListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { FullQuranPlayer } from "@/components/FullQuranPlayer";
 import { useSurahList } from "@/hooks/use-surah-list";
 import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
 import { useAppSettings } from "@/hooks/use-app-settings";
@@ -136,6 +137,11 @@ export default function Index({ onMenuClick }: IndexProps) {
           </div>
         </section>
 
+        {/* Mode Baca Full — letak di atas quick actions supaya user lihat duluan */}
+        <section className="mb-3" aria-label="Mode baca Al-Qur'an full">
+          <FullQuranPlayer />
+        </section>
+
         <section className="mb-4" aria-label="Akses cepat">
           <nav aria-label="Menu akses cepat">
             <ul className="grid grid-cols-4 sm:grid-cols-4 gap-2" role="list">
@@ -182,7 +188,6 @@ export default function Index({ onMenuClick }: IndexProps) {
           </nav>
         </section>
 
-        {/* Stats + Last Read + Islamic Calendar */}
         <section className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3" aria-label="Ringkasan">
           <StatsCard />
           <LastReadCard />

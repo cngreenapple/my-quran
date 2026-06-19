@@ -25,6 +25,12 @@ interface AudioContextValue {
   togglePlay: () => void;
   stop: () => void;
   seek: (time: number) => void;
+  /**
+   * Register callback yang dipanggil saat surah selesai diputar.
+   * Return `false` dari callback untuk suppress default auto-next behavior.
+   * Berguna untuk queue manager (mis. play range 5-10, skip auto-next ke 11).
+   */
+  onSurahEnded: (callback: (surahNumber: number) => boolean | void) => () => void;
 }
 
 const AudioContext = createContext<AudioContextValue | null>(null);
@@ -57,13 +63,18 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
+  /**
+   * Set of callbacks yang dipanggil saat surah selesai.
+   * Return `false` untuk suppress default behavior (auto-next).
+   */
+  const onEndedCallbacksRef = useRef<Set<(nomor: number) => boolean | void>>(new Set());
+
   const { data: surahList } = useQuery({
     queryKey: ["surah-list"],
     queryFn: fetchSurahList,
     staleTime: Infinity,
   });
 
-  // Refs untuk akses latest state dalam stable event handlers
   const currentSurahRef = useRef<number | null>(currentSurah);
   const surahListRef = useRef(surahList);
   const playRef = useRef<((surahNumber: number, surahName: string) => void) | null>(null);
@@ -77,7 +88,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     surahListRef.current = surahList;
   }, [surahList]);
 
-  // Initialize audio element ONCE
   useEffect(() => {
     const audio = new Audio();
     audio.preload = "metadata";
@@ -102,6 +112,24 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     };
     const onEnded = () => {
       const prev = currentSurahRef.current;
+
+      // Notify subscribers (e.g. queue manager). Kalau ada yang return `false`,
+      // suppress default auto-next (queue sudah handle sendiri).
+      let suppressDefault = false;
+      if (prev !== null) {
+        for (const cb of onEndedCallbacksRef.current) {
+          try {
+            const result = cb(prev);
+            if (result === false) suppressDefault = true;
+          } catch (err) {
+            console.error("[Audio] onSurahEnded callback error", err);
+          }
+        }
+      }
+
+      if (suppressDefault) return;
+
+      // Default behavior: auto-next ke surah berikutnya (114 → stop)
       if (prev && prev < 114) {
         const next = prev + 1;
         const nextSurahInfo = surahListRef.current?.find((s) => s.nomor === next);
@@ -156,49 +184,35 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("error", onError);
       audio.removeAttribute("src");
-      // Bersihkan <source> children
       while (audio.firstChild) audio.removeChild(audio.firstChild);
       audio.load();
     };
   }, []);
 
-  // Pause audio saat tab di-hide atau sebelum unload
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
         const audio = audioRef.current;
-        if (audio && !audio.paused) {
-          audio.pause();
-        }
+        if (audio && !audio.paused) audio.pause();
       }
     };
-
     const handleBeforeUnload = () => {
       const audio = audioRef.current;
-      if (audio && !audio.paused) {
-        audio.pause();
-      }
+      if (audio && !audio.paused) audio.pause();
     };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
-  // Subscribe ke coordination events - pause ketika ayat audio dimulai
-  // Deps kosong: subscribe sekali, pakai ref untuk akses current state
   useEffect(() => {
     const unsubscribe = subscribeToStop((event) => {
-      // event.mode !== "surah" berarti ayat audio yang broadcast
       if (event.mode !== "surah" && currentSurahRef.current !== null) {
         const audio = audioRef.current;
-        if (audio && !audio.paused) {
-          audio.pause();
-        }
+        if (audio && !audio.paused) audio.pause();
       }
     });
     return unsubscribe;
@@ -208,7 +222,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Broadcast stop ke audio mode lain (ayat)
     broadcastStop("surah", `${surahNumber}`);
 
     const token = ++playTokenRef.current;
@@ -219,20 +232,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setError(null);
     setIsLoadingAudio(true);
 
-    // Setup audio element dengan multiple source untuk fallback otomatis
-    // Hapus src & source lama
     audio.removeAttribute("src");
     while (audio.firstChild) audio.removeChild(audio.firstChild);
 
-    // Append <source> untuk setiap CDN. Browser otomatis try next kalau error.
     const sources = getAudioSources(surahNumber);
     appendAudioSources(audio, sources);
-
-    // Set primary URL untuk display di UI
     setAudioUrl(sources[0].src);
 
     audio.load();
-
     if (token !== playTokenRef.current) return;
 
     console.log(`[Audio] Playing surah ${surahNumber}: ${surahName}`);
@@ -244,9 +251,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           console.log(`[Audio] Successfully started surah ${surahNumber}`);
         }
       } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") {
-          return;
-        }
+        if (err instanceof Error && err.name === "AbortError") return;
         console.error("[Audio play failed]", {
           name: err instanceof Error ? err.name : "Unknown",
           message: err instanceof Error ? err.message : String(err),
@@ -258,9 +263,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           setIsPlaying(false);
         }
       } finally {
-        if (token === playTokenRef.current) {
-          setIsLoadingAudio(false);
-        }
+        if (token === playTokenRef.current) setIsLoadingAudio(false);
       }
     };
 
@@ -272,10 +275,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
 
     if (audio.paused) {
-      // Saat resume, broadcast stop ke ayat (sama seperti play surah baru)
-      if (currentSurah !== null) {
-        broadcastStop("surah", `${currentSurah}`);
-      }
+      if (currentSurah !== null) broadcastStop("surah", `${currentSurah}`);
       const token = ++playTokenRef.current;
       const safePlay = async () => {
         try {
@@ -322,13 +322,28 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setProgress(audio.currentTime);
   }, []);
 
-  // Keep refs in sync dengan latest callback implementations
+  /**
+   * Register callback that fires when a surah finishes playing.
+   * Returns unsubscribe function.
+   *
+   * Callback can return `false` to suppress default auto-next behavior
+   * (used by queue manager to take over playback control).
+   */
+  const onSurahEnded = useCallback(
+    (callback: (surahNumber: number) => boolean | void) => {
+      onEndedCallbacksRef.current.add(callback);
+      return () => {
+        onEndedCallbacksRef.current.delete(callback);
+      };
+    },
+    [],
+  );
+
   useEffect(() => {
     playRef.current = play;
     stopRef.current = stop;
   }, [play, stop]);
 
-  // Memoize context value
   const value = useMemo<AudioContextValue>(
     () => ({
       currentSurah,
@@ -343,6 +358,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       togglePlay,
       stop,
       seek,
+      onSurahEnded,
     }),
     [
       currentSurah,
@@ -357,14 +373,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       togglePlay,
       stop,
       seek,
+      onSurahEnded,
     ],
   );
 
-  return (
-    <AudioContext.Provider value={value}>
-      {children}
-    </AudioContext.Provider>
-  );
+  return <AudioContext.Provider value={value}>{children}</AudioContext.Provider>;
 }
 
 export function useAudio() {
