@@ -1,12 +1,9 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   getTodayInfo,
   GREGORIAN_MONTH_NAMES,
-  INDONESIAN_WEEKDAYS_SHORT,
   gregorianToJDN,
   jdnToHijri,
 } from "@/lib/date";
@@ -30,21 +27,13 @@ import { WeekdayRow } from "./WeekdayRow";
  * Ini adalah layout paling informatif untuk kalender Islam —
  * user bisa langsung lihat posisi tanggal Hijriah dari tanggal Masehi
  * (atau sebaliknya) tanpa perlu navigasi terpisah.
- *
- * Mode display:
- *   - "combined": tampilkan kedua angka (default)
- *   - "hijri":    fokus Hijriah, Masehi sebagai subscript kecil
- *   - "gregorian": fokus Masehi, Hijriah sebagai subscript kecil
  */
-type DisplayMode = "combined" | "hijri" | "gregorian";
-
 interface CalendarGridProps {
   today?: ReturnType<typeof getTodayInfo>;
 }
 
 export function CalendarGrid({ today: todayProp }: CalendarGridProps) {
   const today = useMemo(() => todayProp ?? getTodayInfo(), [todayProp]);
-  const [mode, setMode] = useState<DisplayMode>("combined");
 
   // Navigation state — selalu sinkron antara Hijriah & Masehi
   // (user navigasi 1 bulan → kedua kalender ikut)
@@ -143,37 +132,6 @@ export function CalendarGrid({ today: todayProp }: CalendarGridProps) {
   return (
     <Card className="border-border/60 overflow-hidden">
       <CardContent className="p-3.5">
-        {/* Mode toggle */}
-        <div className="flex items-center gap-1.5 mb-3 p-1 rounded-xl bg-muted" role="group" aria-label="Mode tampilan kalender">
-          <Button
-            variant={mode === "combined" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setMode("combined")}
-            className="rounded-lg h-7 text-[11px] flex-1 font-semibold"
-            aria-pressed={mode === "combined"}
-          >
-            🌙📅 Gabungan
-          </Button>
-          <Button
-            variant={mode === "hijri" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setMode("hijri")}
-            className="rounded-lg h-7 text-[11px] flex-1 font-semibold"
-            aria-pressed={mode === "hijri"}
-          >
-            🌙 Hijriah
-          </Button>
-          <Button
-            variant={mode === "gregorian" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setMode("gregorian")}
-            className="rounded-lg h-7 text-[11px] flex-1 font-semibold"
-            aria-pressed={mode === "gregorian"}
-          >
-            📅 Masehi
-          </Button>
-        </div>
-
         {/* Title — both Hijriah & Masehi */}
         <CalendarHeader
           subtitle="🌙📅 Hijriah & Masehi"
@@ -197,8 +155,6 @@ export function CalendarGrid({ today: todayProp }: CalendarGridProps) {
           {cells.map((cell, idx) => {
             if (cell.gregDay === 0) return <div key={idx} aria-hidden="true" />;
             const c = cell.holiday ? colorClasses[cell.holiday.color] : null;
-
-            // Style variants by mode
             const isTodayStyle = cell.isToday;
             const baseClass = cn(
               "relative aspect-square rounded-lg flex flex-col items-center justify-center text-xs font-semibold transition-all",
@@ -222,44 +178,32 @@ export function CalendarGrid({ today: todayProp }: CalendarGridProps) {
                 title={cell.holiday?.name}
               >
                 {/* Hijriah number (small, top) */}
-                {mode !== "gregorian" && (
-                  <span
-                    className={cn(
-                      "tabular-nums leading-none",
-                      mode === "hijri"
-                        ? "text-base font-bold"
-                        : "text-[9px] font-medium",
-                      isTodayStyle
-                        ? "text-primary-foreground/80"
-                        : c
-                        ? c.text
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {cell.hijriDay}
-                  </span>
-                )}
+                <span
+                  className={cn(
+                    "tabular-nums leading-none text-[9px] font-medium",
+                    isTodayStyle
+                      ? "text-primary-foreground/80"
+                      : c
+                      ? c.text
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {cell.hijriDay}
+                </span>
 
                 {/* Masehi number (primary, bottom) */}
-                {mode !== "hijri" && (
-                  <span
-                    className={cn(
-                      "tabular-nums leading-none",
-                      mode === "gregorian"
-                        ? "text-base font-bold"
-                        : mode === "combined"
-                        ? "text-sm font-bold"
-                        : "text-[9px] font-medium",
-                      isTodayStyle
-                        ? "text-primary-foreground"
-                        : c
-                        ? c.text
-                        : "text-foreground",
-                    )}
-                  >
-                    {cell.gregDay}
-                  </span>
-                )}
+                <span
+                  className={cn(
+                    "tabular-nums leading-none text-sm font-bold",
+                    isTodayStyle
+                      ? "text-primary-foreground"
+                      : c
+                      ? c.text
+                      : "text-foreground",
+                  )}
+                >
+                  {cell.gregDay}
+                </span>
 
                 {/* Holiday emoji (bottom-right corner) */}
                 {cell.holiday && (
