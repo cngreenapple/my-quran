@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Search, BookOpen, Clock, BookHeart, Hand, Star,
@@ -16,11 +16,13 @@ import { IslamicCalendarCard } from "@/components/IslamicCalendarCard";
 import { SurahListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { FullQuranPlayer } from "@/components/full-quran/FullQuranPlayer";
+import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
 import { useSurahList } from "@/hooks/use-surah-list";
 import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useScrollVisibility } from "@/hooks/use-scroll";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { ASMAUL_HUSNA } from "@/data/asmaul-husna";
 import { getTodayInfo, formatFullDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -67,6 +69,19 @@ export default function Index({ onMenuClick }: IndexProps) {
   const { data, isLoading, isError, refetch } = useSurahList();
   const { totalCompletedToday } = useDzikirCounter();
   const { settings } = useAppSettings();
+
+  /**
+   * Pull-to-refresh: trigger refetch daftar surah saat user pull down.
+   *
+   * - Hanya aktif di touch device (touchmove events only fire di touch)
+   * - Hanya trigger saat user di top-of-page (scrollY <= 5)
+   * - Disabled saat input search focused (supaya gak ganggu ngetik)
+   * - Suppress iOS Safari native pull-to-refresh via preventDefault
+   * - Haptic feedback saat cross threshold
+   */
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: () => refetch(),
+  });
 
   const asmaOfTheDay = useMemo(() => {
     const now = new Date();
@@ -315,6 +330,11 @@ export default function Index({ onMenuClick }: IndexProps) {
           <ArrowUp className="w-5 h-5 text-foreground" aria-hidden="true" />
         </button>
       )}
+
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+      />
     </div>
   );
 }
