@@ -3,14 +3,12 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Calendar, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { getTodayInfo, GREGORIAN_MONTH_NAMES } from "@/lib/date";
 import { getHolidayOnDate } from "@/data/islamic-holidays";
 import { CalendarGrid } from "@/components/kalender/CalendarGrid";
-import { HolidaysTable } from "@/components/kalender/HolidaysTable";
 
 interface KalenderPageProps {
   onMenuClick: () => void;
@@ -58,35 +56,7 @@ export default function KalenderPage({ onMenuClick }: KalenderPageProps) {
 
         <TodayCard today={today} todayHoliday={todayHoliday} />
 
-        <Tabs defaultValue="calendar" className="space-y-4">
-          <TabsList
-            className="grid w-full max-w-sm mx-auto grid-cols-2 h-10 rounded-full bg-muted p-0.5"
-            aria-label="Pilihan tampilan kalender"
-          >
-            <TabsTrigger
-              value="calendar"
-              className="rounded-full gap-1.5 text-xs data-[state=active]:bg-card data-[state=active]:shadow-sm"
-            >
-              <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
-              Kalender
-            </TabsTrigger>
-            <TabsTrigger
-              value="holidays"
-              className="rounded-full gap-1.5 text-xs data-[state=active]:bg-card data-[state=active]:shadow-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-              Hari Besar
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="calendar" className="animate-fade-in">
-            <CalendarGrid today={today} />
-          </TabsContent>
-
-          <TabsContent value="holidays" className="animate-fade-in">
-            <HolidaysTable />
-          </TabsContent>
-        </Tabs>
+        <CalendarGrid today={today} />
       </main>
       <AudioPlayer />
     </div>
