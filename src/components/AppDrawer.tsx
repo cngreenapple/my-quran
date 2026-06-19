@@ -2,11 +2,13 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Home, Bookmark, StickyNote, Clock, Star, BookHeart, Hand,
   Compass, Moon, Calendar, Video, Info, X, ArrowUp, Settings,
-  CircleDot,
+  CircleDot, Download, Check,
 } from "lucide-react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { usePWA } from "@/hooks/use-pwa";
+import { showSuccess, showError } from "@/utils/toast";
 
 interface AppDrawerProps {
   open: boolean;
@@ -58,6 +60,7 @@ export function AppDrawer({ open, onOpenChange }: AppDrawerProps) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  const { isInstallable, isInstalled, promptInstall } = usePWA();
 
   useEffect(() => {
     if (open) {
@@ -99,6 +102,36 @@ export function AppDrawer({ open, onOpenChange }: AppDrawerProps) {
 
   const handleScrollTop = () => {
     document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /**
+   * Trigger native install prompt.
+   *
+   * Flow:
+   * 1. `promptInstall()` show browser's native install dialog
+   * 2. User accepts/dismisses
+   * 3. Toast feedback sesuai outcome
+   * 4. Drawer auto-close supaya user lihat feedback toast
+   *
+   * Edge cases:
+   * - Kalau `isInstallable === false` (mis. iOS Safari yang gak support
+   *   beforeinstallprompt), button ini gak akan render — jadi handler
+   *   ini gak akan dipanggil dari draw state
+   * - Kalau `isInstalled === true`, button juga gak render
+   */
+  const handleInstall = async () => {
+    try {
+      const accepted = await promptInstall();
+      if (accepted) {
+        showSuccess("Aplikasi berhasil di-install! 🎉");
+      } else {
+        showError("Install dibatalkan");
+      }
+      onOpenChange(false);
+    } catch (err) {
+      console.error("[Install] Failed", err);
+      showError("Gagal menampilkan prompt install");
+    }
   };
 
   return (
@@ -199,6 +232,76 @@ export function AppDrawer({ open, onOpenChange }: AppDrawerProps) {
                 </ul>
               </div>
             ))}
+
+            {/* Section "Akses Cepat" — PWA Install button (conditional).
+             *
+             * Show only when:
+             * - isInstallable = true (browser fired beforeinstallprompt event)
+             * - isInstalled = false (user belum install as PWA)
+             *
+             * Hidden when:
+             * - Already installed (button would be redundant)
+             * - Browser doesn't support (iOS Safari) — no native prompt available
+             *   (Catatan: iOS Safari gak support beforeinstallprompt, jadi
+             *   isInstallable selalu false. User di iOS harus manual install
+             *   via Share → Add to Home Screen, gak bisa pakai native dialog)
+             */}
+            {isInstallable && !isInstalled && (
+              <div className="mt-3 mb-1">
+                <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300/60">
+                  Akses Cepat
+                </p>
+                <ul className="space-y-0.5" role="list">
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleInstall}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium transition-all text-emerald-50/90 hover:bg-white/5 group"
+                      aria-label="Install aplikasi ke home screen"
+                    >
+                      <div
+                        className="w-[18px] h-[18px] shrink-0 rounded-md bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"
+                        aria-hidden="true"
+                      >
+                        <Download className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                      </div>
+                      <span className="truncate flex-1 text-left">Install Aplikasi</span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 shrink-0">
+                        Baru
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {/* Installed indicator — visual confirmation kalau app sudah ke-install.
+             * Read-only display (no click), pakai icon Check dengan styling subtle.
+             * Tampil hanya kalau isInstalled = true (i.e. user udah pernah install). */}
+            {isInstalled && (
+              <div className="mt-3 mb-1">
+                <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300/60">
+                  Akses Cepat
+                </p>
+                <ul className="space-y-0.5" role="list">
+                  <li>
+                    <div
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[14px] font-medium text-emerald-200/60"
+                      role="status"
+                      aria-label="Aplikasi sudah ter-install"
+                    >
+                      <div
+                        className="w-[18px] h-[18px] shrink-0 rounded-md bg-emerald-500/20 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <Check className="w-2.5 h-2.5 text-emerald-400" strokeWidth={3} />
+                      </div>
+                      <span className="truncate flex-1 text-left">App Terinstall</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            )}
           </nav>
         </aside>
       )}
