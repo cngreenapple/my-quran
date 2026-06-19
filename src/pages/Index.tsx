@@ -2,9 +2,10 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Search, BookOpen, Clock, BookHeart, Hand, Star,
-  Compass, Moon, ArrowRight, Calendar, CircleDot,
+  Compass, Moon, ArrowRight, ArrowUp, Calendar, CircleDot,
   ListMusic, Video, StickyNote, Settings as SettingsIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { SearchBar } from "@/components/SearchBar";
 import { SurahCard } from "@/components/SurahCard";
@@ -19,6 +20,7 @@ import { useSurahList } from "@/hooks/use-surah-list";
 import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useScrollVisibility } from "@/hooks/use-scroll";
 import { ASMAUL_HUSNA } from "@/data/asmaul-husna";
 import { getTodayInfo, formatFullDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -52,16 +54,14 @@ const colorMap = {
   indigo: { bg: "bg-indigo-500/8", text: "text-indigo-600 dark:text-indigo-400", grad: "from-indigo-500 to-indigo-700" },
   fuchsia: { bg: "bg-fuchsia-500/8", text: "text-fuchsia-600 dark:text-fuchsia-400", grad: "from-fuchsia-500 to-fuchsia-700" },
   orange: { bg: "bg-orange-500/8", text: "text-orange-600 dark:text-orange-400", grad: "from-orange-500 to-orange-700" },
-  // Pink — Live streaming (rose variant, lebih light & vibrant untuk live broadcast)
   pink: { bg: "bg-pink-500/8", text: "text-pink-600 dark:text-pink-400", grad: "from-pink-500 to-pink-700" },
-  // Lime — Catatan (green-yellow variant, produktif, distinct dari emerald Dzikir)
   lime: { bg: "bg-lime-500/8", text: "text-lime-700 dark:text-lime-400", grad: "from-lime-500 to-lime-700" },
-  // Slate — Setting (netral, formal, abu-biru untuk utility/admin)
   slate: { bg: "bg-slate-500/8", text: "text-slate-700 dark:text-slate-400", grad: "from-slate-500 to-slate-700" },
 };
 
 export default function Index({ onMenuClick }: IndexProps) {
   useDocumentTitle();
+  const showJumpToTop = useScrollVisibility(300);
 
   const [query, setQuery] = useState("");
   const { data, isLoading, isError, refetch } = useSurahList();
@@ -198,14 +198,6 @@ export default function Index({ onMenuClick }: IndexProps) {
           </nav>
         </section>
 
-        {/* StatsCard full-width supaya tidak di grid dengan LastReadCard.
-            Sebelumnya pakai `grid grid-cols-1 md:grid-cols-2` dengan StatsCard
-            dan LastReadCard sebagai siblings — saat LastReadCard re-render
-            (mis. setelah FullQuranPlayer expand), StatsCard ikut shift.
-
-            Fix: StatsCard full-width di section ini, LastReadCard di section
-            terpisah di bawahnya. Masing-masing section punya contain:layout
-            untuk isolate re-paint. */}
         <section className="mb-3" aria-label="Statistik bacaan">
           <StatsCard />
         </section>
@@ -251,21 +243,6 @@ export default function Index({ onMenuClick }: IndexProps) {
           </Link>
         </section>
 
-        {/* FullQuranPlayer — dipindahkan dari posisi paling atas ke sini,
-            tepat di atas section "Daftar Surat".
-            *
-            * Alasan layout:
-            * 1. Player adalah **browsing tool** (untuk play sequence surah)
-            *    → logically berdekatan dengan "Daftar Surat" yang juga browsing tool
-            * 2. Quick actions, stats, last read, calendar, dll adalah **context cards**
-            *    yang user scan dulu sebelum decide mau "browse" atau "play"
-            * 3. Visual flow: Hero (greeting) → Quick actions (shortcuts) → Context (stats/dates)
-            *    → Browse options (Daftar Surat atau Play Full) → Content
-            *
-            * Anti-glitch: section ini punya `contain: layout` supaya internal
-            * expand/collapse FullQuranPlayer (range picker, queue dropdown)
-            * tidak trigger reflow ke siblings di atas/bawah.
-            */}
         <section
           className="mb-4"
           aria-label="Mode baca Al-Qur'an full"
@@ -327,6 +304,17 @@ export default function Index({ onMenuClick }: IndexProps) {
           )}
         </section>
       </main>
+
+      {showJumpToTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-24 right-4 z-30 w-11 h-11 rounded-2xl bg-card border border-border shadow-xl flex items-center justify-center hover:bg-muted active:scale-95 transition-all animate-fade-in"
+          aria-label="Scroll ke atas"
+        >
+          <ArrowUp className="w-5 h-5 text-foreground" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }
