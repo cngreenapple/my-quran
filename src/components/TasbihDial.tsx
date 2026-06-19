@@ -11,8 +11,8 @@ interface TasbihDialProps {
   target: number;
   /** Color theme */
   color: "emerald" | "amber" | "sky" | "rose" | "violet";
-  /** Tap handler — increment. Returns true kalau baru saja reach target. */
-  onTap: () => boolean;
+  /** Tap handler — increment */
+  onTap: () => void;
   /** Long-press handler — reset */
   onReset: () => void;
   /** True jika cycle sudah complete (visual cue) */
@@ -30,11 +30,11 @@ const gradientMap: Record<TasbihDialProps["color"], { from: string; to: string; 
 /**
  * Haptic patterns (only on REACH TARGET, not on regular tap):
  *
- * - TAP: no vibration (regular counter increment tidak perlu haptic feedback)
- * - COMPLETE: triple-ascending burst [100, 50, 150, 50, 200] = 550ms
- *   Pattern ascending: starts soft → builds → climaxes dengan long 200ms pulse.
- *   Plus secondary vibration call 100ms kemudian untuk extra "echo" feel.
- *   Total perceived vibration: ~650ms — dramatic, jelas terasa.
+ * - TAP: no vibration (regular counter increment silent)
+ * - COMPLETE (reach target): triple-ascending burst [100, 50, 150, 50, 200] = 550ms
+ *   Pattern ascending: 100ms → 150ms → 200ms (escalating intensity).
+ *   Plus secondary "echo" vibration 100ms kemudian untuk extra emphasis.
+ *   Total perceived vibration: ~790ms — dramatic, jelas terasa.
  * - RESET: long single pulse [200] = 200ms — clear "reset" signal
  */
 function hapticComplete() {
@@ -67,7 +67,7 @@ function TasbihDialComponent({
   const tapTimeoutRef = useRef<number | null>(null);
   const celebrateTimeoutRef = useRef<number | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
-  const wasCompleteRef = useRef(isComplete);
+  const lastHapticAtRef = useRef<number>(current);
   const grad = gradientMap[color];
 
   // SVG ring geometry
@@ -76,29 +76,44 @@ function TasbihDialComponent({
   const offset = circumference - (percent / 100) * circumference;
 
   /**
-   * Track transition `isComplete: false → true` untuk trigger celebration haptic.
+   * Multi-milestone haptic trigger.
    *
-   * Behavior: setiap kali user reach target (cycle 1, 2, 3, dst), fire haptic.
-   * - wasCompleteRef tracks previous state supaya tidak double-trigger.
-   * - Kalau user mulai cycle baru (reset, current turun ke 0), wasCompleteRef
-   *   jadi false, dan reach target lagi → haptic fires.
-   * - Pakai ref (bukan useEffect langsung) supaya:
-   *   1. Tidak trigger saat initial render
-   *   2. Tidak trigger kalau user navigate away & back
-   *   3. Detect edge dengan presisi (transition only)
+   * Logic: setiap kali `current` sampai di kelipatan `target`, fire haptic.
+   * - target=33: reach 33, 66, 99, 132, ... → haptic setiap kelipatan
+   * - target=1000: reach 1000, 2000, 3000, ... → haptic setiap kelipatan
+   *
+   * Pakai ref `lastHapticAtRef` untuk track milestone terakhir yang sudah
+   * di-trigger haptic. Saat `current` berubah:
+   * - Hitung kelipatan tertinggi yang sudah passed: `Math.floor(current / target) * target`
+   * - Kalau > lastHapticAt → berarti baru reach milestone baru → fire haptic
+   *
+   * Edge cases:
+   * - Reset ke 0: `lastHapticAt` update ke 0, next reach target → haptic ✓
+   * - Auto-reset harian (midnight): current 0, target 33, fresh day → haptic di 33 ✓
+   * - Switch preset: target berubah → `lastHapticAt` reset ke 0 oleh dependency [target]
+   * - Skip increment (current jumps dari 30 ke 35 somehow): tetap trigger karena
+   *   cek `current` value, bukan increment-by-1
    */
   useEffect(() => {
-    if (isComplete && !wasCompleteRef.current) {
-      // Just reached target — fire STRONG celebration haptic!
+    if (target <= 0) return;
+
+    // Hitung milestone kelipatan target yang baru saja dicapai
+    const newMilestone = Math.floor(current / target) * target;
+
+    if (newMilestone > lastHapticAtRef.current && newMilestone > 0) {
+      // Baru reach milestone baru!
       setCelebrating(true);
       hapticComplete();
       if (celebrateTimeoutRef.current) clearTimeout(celebrateTimeoutRef.current);
       celebrateTimeoutRef.current = window.setTimeout(() => {
         setCelebrating(false);
       }, 800);
+      lastHapticAtRef.current = newMilestone;
+    } else if (current < lastHapticAtRef.current) {
+      // Reset detected (current turun) — update ref supaya haptic fires di next milestone
+      lastHapticAtRef.current = 0;
     }
-    wasCompleteRef.current = isComplete;
-  }, [isComplete]);
+  }, [current, target]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -141,8 +156,7 @@ function TasbihDialComponent({
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    // Tap biasa: NO haptic. onTap() return boolean — kalau true (reach target),
-    // useEffect [isComplete] akan trigger hapticComplete() + visual celebration.
+    // Tap biasa: NO haptic. Reach target akan di-detect via useEffect [current].
     onTap();
     setAnimating(true);
     if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);

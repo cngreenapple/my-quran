@@ -71,17 +71,6 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
     setConfirmResetAllOpen(false);
   };
 
-  /**
-   * Wrapper untuk increment — return value diabaikan di sini.
-   * TasbihDial handle celebration haptic-nya sendiri berdasarkan `isComplete`
-   * transition (lihat useEffect dengan wasCompleteRef).
-   *
-   * Kita tetap pakai boolean return untuk dokumentasi API contract.
-   */
-  const handleIncrement = () => {
-    increment(activePreset);
-  };
-
   return (
     <div className="min-h-dvh bg-background">
       <Header onMenuClick={onMenuClick} />
@@ -110,7 +99,7 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
             Tasbih Digital
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Counter dzikir dengan preset populer. Tap untuk hitung, tekan lama untuk reset.
+            Tap untuk hitung. Getar otomatis setiap kali target tercapai (33x, 66x, 99x, ...).
           </p>
         </section>
 
@@ -223,7 +212,7 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
                 current={state.current}
                 target={activePreset.target}
                 color={activePreset.color}
-                onTap={handleIncrement}
+                onTap={() => increment(activePreset)}
                 onReset={() => reset(activePreset)}
                 isComplete={isComplete}
               />
@@ -260,6 +249,7 @@ export default function Tasbih({ onMenuClick }: TasbihProps) {
                   </li>
                   <li>Counter otomatis reset setiap hari (untuk dzikir harian).</li>
                   <li>Tap area untuk hitung, tekan lama untuk reset.</li>
+                  <li>Getar otomatis setiap kali target tercapai (33, 66, 99, ...).</li>
                 </ul>
               </div>
             </div>
