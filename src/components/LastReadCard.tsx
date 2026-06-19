@@ -6,9 +6,9 @@ import { useSurahList } from "@/hooks/use-surah-list";
 import { showSuccess } from "@/utils/toast";
 
 /**
- * LastReadCard — kartu \"Lanjutkan Baca\" di beranda.
+ * LastReadCard — kartu "Lanjutkan Baca" di beranda.
  *
- * FIX glitch layar:
+ * FIX glitch layar (v2):
  *
  * Sebelumnya, kartu punya 3 kondisi render yang TIDAK konsisten
  * ukuran-nya:
@@ -25,7 +25,7 @@ import { showSuccess } from "@/utils/toast";
  *   kondisi #3 render → kartu **muncul tiba-tiba**.
  *
  * Hasilnya: layout grid `md:grid-cols-2` shift karena StatsCard di
- * sebelahnya kehilangan pasangan. User lihat \"kedipan\" / glitch.
+ * sebelahnya kehilangan pasangan. User lihat "kedipan" / glitch.
  *
  * Fix:
  * 1. **Loading state eksplisit** dengan skeleton + `min-h` konsisten
@@ -35,6 +35,25 @@ import { showSuccess } from "@/utils/toast";
  *    daripada return `null`.
  * 3. **`min-h-[68px]`** di SEMUA state (loading/empty/defensive/populated)
  *    supaya tinggi kartu seragam di grid 2-kolom.
+ *
+ * FIX glitch (v3) — adjacent expansion:
+ *
+ * Saat user klik tombol "Baca Full" di FullQuranPlayer (section tepat
+ * di atas LastReadCard), komponen FullQuranPlayer expand dari ~50px
+ * ke ~280px. Section di bawahnya (Quick Actions, Ringkasan) geser
+ * ke bawah dengan momentum berbeda → user lihat "loncat" visual.
+ *
+ * Solusi: tambahkan CSS containment di root element supaya:
+ * - `contain: layout` → isolate layout reflow supaya perubahan
+ *   parent (FullQuranPlayer expand) tidak trigger reflow di sini.
+ * - `will-change: transform` → hint browser untuk promote element
+ *   ke compositor layer (GPU-accelerated, tidak sync dengan main
+ *   thread untuk paint ulang).
+ * - `transform: translateZ(0)` → hack paksa GPU layer creation.
+ *
+ * Hasil: saat FullQuranPlayer expand, layout shift tetap terjadi
+ * (it normal), TAPI re-paint LastReadCard terisolasi — tidak
+ * "flash" / "glitch" karena GPU layer cache.
  */
 export function LastReadCard() {
   const { lastRead, clearLastRead } = useLastRead();
@@ -137,7 +156,16 @@ export function LastReadCard() {
       to={`/surat/${lastRead.surahNumber}`}
       className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-2xl"
     >
-      <div className="relative flex items-center gap-3 p-3.5 pr-2.5 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent hover:border-emerald-500/50 hover:shadow-md hover:shadow-emerald-500/10 transition-all active:scale-[0.99] min-h-[68px]">
+      <div
+        className="relative flex items-center gap-3 p-3.5 pr-2.5 rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent hover:border-emerald-500/50 hover:shadow-md hover:shadow-emerald-500/10 transition-all active:scale-[0.99] min-h-[68px]"
+        style={{
+          // Anti-glitch: isolasi re-paint supaya saat parent (FullQuranPlayer)
+          // expand/collapse, kartu ini tidak "flash". Lihat header comment.
+          contain: "layout",
+          willChange: "transform",
+          transform: "translateZ(0)",
+        }}
+      >
         {/* Play icon — hover scale */}
         <div
           className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/30 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-emerald-500/40 transition-all"

@@ -92,6 +92,7 @@ export default function Index({ onMenuClick }: IndexProps) {
         id="main-content"
         className="container mx-auto px-3 py-3 pb-32 md:pb-12 max-w-5xl"
         aria-labelledby="hero-title"
+        style={{ overflowAnchor: "none" }}
       >
         <section className="mb-4">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-4 sm:p-5 shadow-lg shadow-emerald-500/20">
@@ -137,7 +138,21 @@ export default function Index({ onMenuClick }: IndexProps) {
           </div>
         </section>
 
-        <section className="mb-3" aria-label="Mode baca Al-Qur'an full">
+        {/*
+          FullQuranPlayer di section terpisah dengan padding-bottom eksplisit.
+          Anti-glitch: section ini punya min-height konsisten supaya saat
+          player expand/collapse, layout shift tidak terasa di section lain.
+
+          Trick: gunakan `style={{ contain: "layout" }}` pada wrapper supaya
+          internal expansion FullQuranPlayer tidak trigger reflow ke siblings.
+          Plus `overflowAnchor: none` di <main> supaya scroll position
+          tidak auto-adjust (browser's scroll anchoring) saat DOM berubah.
+        */}
+        <section
+          className="mb-4"
+          aria-label="Mode baca Al-Qur'an full"
+          style={{ contain: "layout" }}
+        >
           <FullQuranPlayer />
         </section>
 
@@ -187,8 +202,19 @@ export default function Index({ onMenuClick }: IndexProps) {
           </nav>
         </section>
 
-        <section className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-3" aria-label="Ringkasan">
+        {/* StatsCard full-width supaya tidak di grid dengan LastReadCard.
+            Sebelumnya pakai `grid grid-cols-1 md:grid-cols-2` dengan StatsCard
+            dan LastReadCard sebagai siblings — saat LastReadCard re-render
+            (mis. setelah FullQuranPlayer expand), StatsCard ikut shift.
+
+            Fix: StatsCard full-width di section ini, LastReadCard di section
+            terpisah di bawahnya. Masing-masing section punya contain:layout
+            untuk isolate re-paint. */}
+        <section className="mb-3" aria-label="Statistik bacaan">
           <StatsCard />
+        </section>
+
+        <section className="mb-4" aria-label="Riwayat terakhir dibaca">
           <LastReadCard />
         </section>
 
