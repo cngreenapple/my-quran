@@ -14,14 +14,14 @@ export function StatsCard() {
   ];
 
   return (
-    <div className="flex items-center gap-1 p-2 rounded-2xl border border-border/60 bg-card">
+    <div className="flex items-stretch gap-1 p-1.5 rounded-2xl border border-border/60 bg-card">
       {items.map((item, i) => {
         const Icon = item.icon;
         return (
           <div
             key={item.label}
             className={cn(
-              "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-xl",
+              "flex-1 min-w-0 flex items-center gap-1.5 px-2 py-1.5 rounded-xl",
               item.accent ? "bg-orange-500/8" : "bg-muted/40",
             )}
           >
@@ -34,12 +34,18 @@ export function StatsCard() {
             >
               <Icon className="w-3.5 h-3.5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold tabular-nums leading-none">
-                {item.value}
-                {item.suffix && <span className="text-[9px] text-muted-foreground font-medium ml-0.5">{item.suffix}</span>}
+            <div className="min-w-0 flex-1 flex flex-col">
+              {/* Row angka + suffix — satu baris, no wrap */}
+              <p className="text-sm font-bold tabular-nums leading-none truncate flex items-baseline gap-0.5">
+                <span>{item.value}</span>
+                {item.suffix && (
+                  <span className="text-[9px] text-muted-foreground font-medium whitespace-nowrap shrink-0">
+                    {item.suffix}
+                  </span>
+                )}
               </p>
-              <p className="text-[9px] text-muted-foreground leading-none mt-0.5 uppercase tracking-wide font-semibold">
+              {/* Label — baris terpisah, truncate aman */}
+              <p className="text-[9px] text-muted-foreground leading-none mt-1 uppercase tracking-wide font-semibold truncate">
                 {item.label}
               </p>
             </div>
