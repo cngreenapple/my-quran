@@ -1,71 +1,51 @@
 import { useState, useEffect, useRef } from "react";
-import { Video, WifiOff, ExternalLink, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { WifiOff, ExternalLink, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * Daftar channel live Ka'bah/Masjidil Haram yang support embed.
+ * Live stream config — Masjidil Haram via Saudi Quran TV.
  *
- * PRIORITAS PERTAMA: Saudi Quran TV (channel ID resmi).
- * Channel ID (UCxxxxx) lebih reliable dari handle (@xxx) untuk embed.
+ * Menggunakan channel custom path `/SaudiQuranTv/live` (user-provided).
+ * YouTube support embed dari channel custom URL (`/embed/live_stream?channel=...`)
+ * dengan format `/channel-slug/live`.
  *
- * YouTube embed endpoint `live_stream?channel=` HANYA accept channel ID
- * format UCxxxxx — kalau pakai handle @xxx, akan return "video unavailable".
- *
- * Format alternatif: `/embed/@handle/live` (handle-based) — lebih baru
- * tapi tidak semua channel support, jadi kita tetap fallback ke UC ID.
- *
- * Channel dipilih yang:
- * 1. Support iframe embed (tidak disable embedding)
- * 2. Live streaming Masjidil Haram / Ka'bah (bukan quran recitation only)
- * 3. Channel resmi (Saudi government / Islamic authority)
+ * Jika embed live_stream gagal (channel off-air atau embed disabled),
+ * ada fallback ke video spesifik `fZvuHkHYaXk` yang diembed langsung.
  */
 const LIVE_STREAMS = [
   {
-    id: "saudi-quran-tv",
+    id: "saudi-quran-tv-live",
     name: "Saudi Quran TV",
     nameArabic: "المسجد الحرام",
     description:
       "Siaran langsung 24 jam dari Masjidil Haram dengan fokus utama Ka'bah dan area thawaf. Channel resmi Saudi Broadcasting Authority.",
     /**
-     * Channel ID Saudi Quran TV: UCSQ8IYGr88z6P3U-WnIFMsg
-     * Format embed: pakai channel ID (UCxxxxx) BUKAN handle (@xxx).
-     * Tambahkan `origin` untuk domain verification (mengurangi CORS issues).
+     * Embed dari channel custom URL (saudiqurantv).
+     * Format: /embed/live_stream?channel=CUSTOM_SLUG
+     * YouTube resolve otomatis slug → channel ID di server.
      */
     embedUrl:
-      "https://www.youtube.com/embed/live_stream?channel=UCSQ8IYGr88z6P3U-WnIFMsg&autoplay=1&mute=1&enablejsapi=1",
-    directUrl: "https://www.youtube.com/@SaudiQuranTv/live",
+      "https://www.youtube.com/embed/live_stream?channel=SaudiQuranTv&autoplay=1&mute=1",
+    directUrl: "https://www.youtube.com/SaudiQuranTv/live",
   },
   {
-    id: "haramain-live",
-    name: "Haramain Live",
-    nameArabic: "الحرمين الشريفين",
+    id: "saudi-quran-tv-direct",
+    name: "Saudi Quran TV (Live Stream)",
+    nameArabic: "بث مباشر",
     description:
-      "Streaming Masjidil Haram & Masjid Nabawi. Channel alternatif untuk tafakkur dari tanah suci.",
-    embedUrl:
-      "https://www.youtube.com/embed/live_stream?channel=UCdLW8qMU1gIqBfBzJgWzSvg&autoplay=1&mute=1",
-    directUrl: "https://www.youtube.com/@HaramainInfo/live",
+      "Live stream spesifik dari Saudi Quran TV — embedded langsung dari video ID untuk memastikan ketersediaan streaming.",
+    /**
+     * Embed langsung dari video ID `fZvuHkHYaXk`.
+     * Ini adalah live stream Ka'bah aktif yang diembed langsung,
+     * bypass /live_stream?channel= endpoint yang kadang bermasalah.
+     */
+    embedUrl: "https://www.youtube.com/embed/fZvuHkHYaXk?autoplay=1&mute=1",
+    directUrl: "https://www.youtube.com/watch?v=fZvuHkHYaXk",
   },
 ];
 
-/**
- * Komponen utama live streaming Masjidil Haram.
- *
- * Multi-stream dengan fallback chain:
- * 1. Coba channel primary (Saudi Quran TV)
- * 2. Kalau iframe load gagal / "unavailable", auto-advance ke channel berikutnya
- * 3. Kalau semua gagal, tampilkan error state dengan link YouTube
- *
- * State lifecycle:
- * - `loading` — initial load, spinner tampil
- * - `currentStreamIndex` — channel yang sedang dicoba
- * - `allFailed` — semua channel sudah dicoba, tampilkan error
- *
- * Detect "unavailable" via iframe `onLoad` setelah timeout 8 detik —
- * kalau iframe selesai load tanpa error dalam 8 detik, dianggap sukses.
- * Kalau timeout, advance ke channel berikutnya.
- */
 export function LiveStreamEmbed({ className }: { className?: string }) {
   const [currentStreamIndex, setCurrentStreamIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -83,11 +63,8 @@ export function LiveStreamEmbed({ className }: { className?: string }) {
   }, [currentStreamIndex]);
 
   /**
-   * Timeout fallback: kalau iframe load event tidak fire dalam 8 detik,
-   * anggap stream gagal (kemungkinan "video unavailable" karena:
-   * - Channel off-air / tidak live
-   * - Embed disabled by channel owner
-   * - Channel ID salah / channel sudah dihapus
+   * Timeout fallback: kalau iframe load event tidak fire dalam 10 detik,
+   * anggap stream gagal.
    *
    * Action: advance ke stream berikutnya, atau tampilkan error kalau
    * semua sudah dicoba.
@@ -96,16 +73,13 @@ export function LiveStreamEmbed({ className }: { className?: string }) {
     if (!loading || iframeLoaded) return;
 
     loadTimerRef.current = window.setTimeout(() => {
-      // Iframe gak load dalam 8 detik → stream dianggap gagal
       if (currentStreamIndex < LIVE_STREAMS.length - 1) {
-        // Advance ke stream berikutnya
         setCurrentStreamIndex((prev) => prev + 1);
       } else {
-        // Semua stream sudah dicoba, tampilkan error final
         setLoading(false);
         setError(true);
       }
-    }, 8000);
+    }, 10000);
 
     return () => {
       if (loadTimerRef.current) {
@@ -166,7 +140,7 @@ export function LiveStreamEmbed({ className }: { className?: string }) {
                     </p>
                     {currentStreamIndex > 0 && (
                       <p className="text-[10px] text-muted-foreground/70 mt-1">
-                        Mencoba channel alternatif ({currentStreamIndex + 1}/{LIVE_STREAMS.length})
+                        Mencoba alternatif ({currentStreamIndex + 1}/{LIVE_STREAMS.length})
                       </p>
                     )}
                   </div>
@@ -213,7 +187,7 @@ export function LiveStreamEmbed({ className }: { className?: string }) {
                 </span>
                 {!error && currentStreamIndex > 0 && (
                   <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider">
-                    via {currentStream.name}
+                    via direct embed
                   </span>
                 )}
               </div>
@@ -250,7 +224,7 @@ export function LiveStreamEmbed({ className }: { className?: string }) {
               : currentStream.description}
           </p>
 
-          {/* Channel selector hint — kalau ada alternative */}
+          {/* Retry hint — kalau pakai alternatif */}
           {!error && LIVE_STREAMS.length > 1 && currentStreamIndex > 0 && (
             <div className="mt-2.5 pt-2.5 border-t border-border/60 flex items-center justify-between gap-2">
               <p className="text-[10px] text-muted-foreground">
@@ -282,13 +256,6 @@ interface ErrorStateProps {
 
 /**
  * Error state ketika semua channel gagal dimuat.
- *
- * Tampilkan 3 kemungkinan penyebab dengan saran spesifik:
- * 1. Channel sedang off-air (tidak live)
- * 2. Embed di-disable oleh owner
- * 3. Internet/connection issue
- *
- * Plus tombol langsung ke YouTube sebagai escape hatch.
  */
 function ErrorState({ onRetry, directUrl }: ErrorStateProps) {
   return (
@@ -304,7 +271,6 @@ function ErrorState({ onRetry, directUrl }: ErrorStateProps) {
         Kemungkinan channel sedang off-air atau embed dinonaktifkan oleh pemilik channel.
       </p>
 
-      {/* Info troubleshooting */}
       <div className="rounded-xl bg-muted/40 border border-border/60 p-2.5 mb-3 max-w-xs text-left">
         <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1 flex items-center gap-1">
           <AlertCircle className="w-2.5 h-2.5" aria-hidden="true" />
