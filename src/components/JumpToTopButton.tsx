@@ -1,4 +1,4 @@
-threshold. Click → smooth scroll ke top. Mount di AppShell sekali supaya otomatis ada di semua route. Z-index strategy dokumentasikan untuk konsistensi dengan AudioPlayer, Header, PWAStatusBar.">
+300px. Click → window.scrollTo({behavior: smooth}). Position fixed bottom-24 right-4 z-30 supaya tidak overlap dengan AudioPlayer/Header/PWAStatusBar. Cleanup proper.">
 import { ArrowUp } from "lucide-react";
 import { useScrollVisibility } from "@/hooks/use-scroll";
 
@@ -14,7 +14,8 @@ interface JumpToTopButtonProps {
  * Click → smooth scroll ke top.
  *
  * Mount di AppShell (App.tsx) sekali supaya single instance,
- * otomatis detect scroll di SEMUA route.
+ * otomatis detect scroll di SEMUA route (Index, SuratDetail, Asmaul,
+ * Dzikir, Doa, Kalender, dll — 17 route total).
  *
  * Z-index strategy (low to high):
  * - z-30:   JumpToTopButton
