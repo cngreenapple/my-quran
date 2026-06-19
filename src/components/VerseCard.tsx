@@ -1,5 +1,5 @@
 import { memo, forwardRef, useState } from "react";
-import { Share2, Bookmark, StickyNote } from "lucide-react";
+import { Share2, Bookmark, StickyNote, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Ayat } from "@/types/quran";
@@ -16,9 +16,10 @@ interface VerseCardProps {
   surahNumber: number;
   surahName: string;
   ayat: Ayat;
-  showTafsir: boolean;
   highlighted?: boolean;
   showTransliteration?: boolean;
+  /** Default state untuk tafsir (true = expanded, false = collapsed). */
+  defaultShowTafsir?: boolean;
 }
 
 export const VerseCard = memo(
@@ -27,17 +28,19 @@ export const VerseCard = memo(
       surahNumber,
       surahName,
       ayat,
-      showTafsir,
       highlighted,
       showTransliteration = true,
+      defaultShowTafsir = false,
     },
     ref,
   ) {
     const tafsirText = ayat.tafsir?.kemenag?.teks;
+    const hasTafsir = !!tafsirText;
     const { isBookmarked, toggleBookmark } = useBookmarks();
     const { getNotesForAyat } = useNotes();
     const { play, currentSurah, togglePlay } = useAudio();
     const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+    const [tafsirOpen, setTafsirOpen] = useState(defaultShowTafsir);
 
     const bookmarked = isBookmarked(surahNumber, ayat.nomorAyat);
     const notesCount = getNotesForAyat(surahNumber, ayat.nomorAyat).length;
@@ -71,6 +74,11 @@ export const VerseCard = memo(
     const handleOpenNotes = () => {
       if ("vibrate" in navigator) navigator.vibrate(10);
       setNotesDialogOpen(true);
+    };
+
+    const handleToggleTafsir = () => {
+      if ("vibrate" in navigator) navigator.vibrate(10);
+      setTafsirOpen((v) => !v);
     };
 
     return (
@@ -122,22 +130,28 @@ export const VerseCard = memo(
                   {ayat.teksIndonesia}
                 </p>
 
-                {showTafsir && (
+                {/* Tafsir (collapsible, inline) */}
+                {tafsirOpen && (
                   <div
                     className={cn(
-                      "rounded-lg p-3 border-l-2",
-                      tafsirText
+                      "rounded-lg p-3 border-l-2 animate-fade-in",
+                      hasTafsir
                         ? "bg-primary/5 border-primary"
                         : "bg-muted/50 border-muted-foreground/30",
                     )}
                   >
-                    <p className="text-[9px] font-bold text-primary uppercase tracking-wider mb-1.5">
+                    <p className="text-[9px] font-bold text-primary uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <BookOpen className="w-3 h-3" aria-hidden="true" />
                       Tafsir Kemenag
                     </p>
-                    {tafsirText ? (
-                      <p className="text-xs text-foreground/85 leading-relaxed">{tafsirText}</p>
+                    {hasTafsir ? (
+                      <p className="text-xs text-foreground/85 leading-relaxed">
+                        {tafsirText}
+                      </p>
                     ) : (
-                      <p className="text-xs italic text-muted-foreground">Tafsir tidak tersedia.</p>
+                      <p className="text-xs italic text-muted-foreground">
+                        Tafsir tidak tersedia untuk ayat ini.
+                      </p>
                     )}
                   </div>
                 )}
@@ -195,6 +209,29 @@ export const VerseCard = memo(
                   >
                     <StickyNote className="w-3.5 h-3.5" />
                     Catatan{notesCount > 0 ? ` (${notesCount})` : ""}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleToggleTafsir}
+                    type="button"
+                    className={cn(
+                      "h-7 px-2.5 gap-1 rounded-full text-[11px] font-medium",
+                      tafsirOpen
+                        ? "text-primary bg-primary/10 hover:bg-primary/20"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-label={tafsirOpen ? `Sembunyikan tafsir ayat ${ayat.nomorAyat}` : `Tampilkan tafsir ayat ${ayat.nomorAyat}`}
+                    aria-expanded={tafsirOpen}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    Tafsir
+                    {tafsirOpen ? (
+                      <ChevronUp className="w-3 h-3 -mr-0.5" aria-hidden="true" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3 -mr-0.5" aria-hidden="true" />
+                    )}
                   </Button>
 
                   <Button

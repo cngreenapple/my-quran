@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Play, MapPin, BookOpen, ScrollText } from "lucide-react";
+import { ArrowLeft, Play, MapPin, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Header } from "@/components/Header";
 import { VerseCard } from "@/components/VerseCard";
 import { SurahDetailSkeleton } from "@/components/LoadingSkeleton";
@@ -30,7 +29,6 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
   const { trackSurahOpen, trackAyatRead } = useReadingStats();
   const { play, currentSurah, togglePlay } = useAudio();
   const { settings } = useAppSettings();
-  const [activeTab, setActiveTab] = useState<"ayat" | "tafsir">("ayat");
   const readAyatsRef = useRef<Set<number>>(new Set());
 
   useDocumentTitle(data ? `${data.nomor}. ${data.namaLatin}` : undefined);
@@ -160,7 +158,7 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
                 aria-label={isCurrentPlaying ? "Jeda audio" : "Putar audio murottal"}
               >
                 <Play className={cn("w-3 h-3", isCurrentPlaying && "animate-pulse")} aria-hidden="true" />
-                {isCurrentPlaying ? "Putar" : "Putar Full"}
+                {isCurrentPlaying ? "Jeda" : "Putar Full"}
               </Button>
             </div>
             <div className="text-center mb-3">
@@ -197,28 +195,17 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "ayat" | "tafsir")} className="mb-3">
-          <TabsList className="grid w-full max-w-xs mx-auto grid-cols-2 h-10 rounded-full bg-muted p-0.5" aria-label="Pilihan tampilan ayat">
-            <TabsTrigger value="ayat" className="rounded-full gap-1.5 text-xs data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
-              Ayat
-            </TabsTrigger>
-            <TabsTrigger value="tafsir" className="rounded-full gap-1.5 text-xs data-[state=active]:bg-card data-[state=active]:shadow-sm">
-              <ScrollText className="w-3.5 h-3.5" aria-hidden="true" />
-              Tafsir
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="ayat" className="space-y-3 mt-3 animate-fade-in">
-            {data.ayat.map((ayat) => (
-              <VerseCard key={ayat.nomorAyat} surahNumber={data.nomor} surahName={data.namaLatin} ayat={ayat} showTafsir={false} showTransliteration={settings.showTransliteration} />
-            ))}
-          </TabsContent>
-          <TabsContent value="tafsir" className="space-y-3 mt-3 animate-fade-in">
-            {data.ayat.map((ayat) => (
-              <VerseCard key={ayat.nomorAyat} surahNumber={data.nomor} surahName={data.namaLatin} ayat={ayat} showTafsir={true} showTransliteration={settings.showTransliteration} />
-            ))}
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-3 animate-fade-in">
+          {data.ayat.map((ayat) => (
+            <VerseCard
+              key={ayat.nomorAyat}
+              surahNumber={data.nomor}
+              surahName={data.namaLatin}
+              ayat={ayat}
+              showTransliteration={settings.showTransliteration}
+            />
+          ))}
+        </div>
       </main>
       <AudioPlayer />
     </div>
