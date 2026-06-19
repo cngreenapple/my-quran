@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Search, BookOpen, Clock, BookHeart, Hand, Star,
   Compass, Moon, ArrowRight, Calendar, CircleDot,
-  ListMusic,
+  ListMusic, Video, StickyNote, Settings as SettingsIcon,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { SearchBar } from "@/components/SearchBar";
@@ -37,6 +37,9 @@ const QUICK_ACTIONS = [
   { to: "/kalender", label: "Kalender", icon: Calendar, color: "indigo" },
   { to: "/puasa-sunnah", label: "Puasa", icon: Moon, color: "fuchsia" },
   { to: "/bookmark", label: "Bookmark", icon: BookOpen, color: "orange" },
+  { to: "/live-makkah", label: "Live", icon: Video, color: "pink" },
+  { to: "/catatan", label: "Catatan", icon: StickyNote, color: "lime" },
+  { to: "/settings", label: "Setting", icon: SettingsIcon, color: "slate" },
 ] as const;
 
 const colorMap = {
@@ -49,6 +52,12 @@ const colorMap = {
   indigo: { bg: "bg-indigo-500/8", text: "text-indigo-600 dark:text-indigo-400", grad: "from-indigo-500 to-indigo-700" },
   fuchsia: { bg: "bg-fuchsia-500/8", text: "text-fuchsia-600 dark:text-fuchsia-400", grad: "from-fuchsia-500 to-fuchsia-700" },
   orange: { bg: "bg-orange-500/8", text: "text-orange-600 dark:text-orange-400", grad: "from-orange-500 to-orange-700" },
+  // Pink — Live streaming (rose variant, lebih light & vibrant untuk live broadcast)
+  pink: { bg: "bg-pink-500/8", text: "text-pink-600 dark:text-pink-400", grad: "from-pink-500 to-pink-700" },
+  // Lime — Catatan (green-yellow variant, produktif, distinct dari emerald Dzikir)
+  lime: { bg: "bg-lime-500/8", text: "text-lime-700 dark:text-lime-400", grad: "from-lime-500 to-lime-700" },
+  // Slate — Setting (netral, formal, abu-biru untuk utility/admin)
+  slate: { bg: "bg-slate-500/8", text: "text-slate-700 dark:text-slate-400", grad: "from-slate-500 to-slate-700" },
 };
 
 export default function Index({ onMenuClick }: IndexProps) {
