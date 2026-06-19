@@ -15,7 +15,7 @@ export interface QueueDropdownItem {
 
 interface QueueDropdownProps {
   open: boolean;
-  position: { top: number; left: number; width: number };
+  position: { top: number; left: number; width: number; placement?: "below" | "above" };
   search: string;
   onSearchChange: (s: string) => void;
   items: QueueDropdownItem[];
@@ -51,19 +51,28 @@ export function QueueDropdown({
 
   if (!open || typeof document === "undefined") return null;
 
+  // Hitung maxHeight yang aman supaya dropdown tidak overflow viewport
+  // dan search input tetap reachable
+  const viewportHeight = window.innerHeight;
+  const maxHeightPreferred = Math.min(480, viewportHeight * 0.6);
+  const maxHeight = position.placement === "above"
+    ? Math.min(maxHeightPreferred, Math.max(0, position.top - 8))
+    : Math.min(maxHeightPreferred, Math.max(0, viewportHeight - position.top - 8));
+
   return createPortal(
     <div
       data-queue-dropdown
-      className="fixed z-[60] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in"
+      className="fixed z-[1100] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in flex flex-col"
       style={{
         top: position.top,
         left: position.left,
         width: position.width,
+        maxHeight: Math.max(200, maxHeight),
       }}
       role="listbox"
       aria-label="Antrian surah"
     >
-      <div className="px-3 py-2.5 border-b border-border/60 bg-gradient-to-br from-emerald-500/8 to-transparent">
+      <div className="px-3 py-2.5 border-b border-border/60 bg-gradient-to-br from-emerald-500/8 to-transparent shrink-0">
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
             Antrian Baca
@@ -91,8 +100,7 @@ export function QueueDropdown({
 
       <div
         ref={listRef}
-        className="overflow-y-auto p-1.5"
-        style={{ maxHeight: "min(60vh, 480px)" }}
+        className="overflow-y-auto p-1.5 flex-1 min-h-0"
       >
         {filteredItems.length === 0 ? (
           <div className="text-center py-8 px-4 text-muted-foreground">
