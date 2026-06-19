@@ -14,7 +14,7 @@ import { IslamicCalendarCard } from "@/components/IslamicCalendarCard";
 import { SurahListSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { FullQuranPlayer } from "@/components/FullQuranPlayer";
+import { FullQuranPlayer } from "@/components/full-quran/FullQuranPlayer";
 import { useSurahList } from "@/hooks/use-surah-list";
 import { useDzikirCounter } from "@/hooks/use-dzikir-counter";
 import { useAppSettings } from "@/hooks/use-app-settings";
