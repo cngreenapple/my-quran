@@ -1,7 +1,9 @@
 import type { Surah, SurahDetail } from "@/types/quran";
+import type { ApiDoaItem } from "@/types/dzikir";
 
 const BASE_URL = "https://equran.id/api/v2";
 const TAFSIR_URL = "https://equran.id/api/v2/tafsir";
+const DOA_URL = "https://equran.id/api/doa";
 const TIMEOUT = 20000;
 
 // ============================================================================
@@ -106,6 +108,18 @@ export async function fetchTafsirSurah(nomor: number): Promise<TafsirItem[]> {
   const response = await fetchWithTimeout(`${TAFSIR_URL}/${nomor}`);
   const data = await response.json();
   return data.data?.tafsir ?? [];
+}
+
+/**
+ * Fetch kumpulan doa dari equran.id/api/doa
+ */
+export async function fetchDoaList(): Promise<ApiDoaItem[]> {
+  const response = await fetchWithTimeout(DOA_URL);
+  const data = await response.json();
+  if (data.status !== "success") {
+    throw new Error("Gagal mengambil data doa");
+  }
+  return data.data as ApiDoaItem[];
 }
 
 // ============================================================================

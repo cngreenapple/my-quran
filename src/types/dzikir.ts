@@ -27,16 +27,11 @@ export interface DoaItem {
   translation: string;
   category: DoaCategory;
   source?: string;
+  /** Catatan tambahan / penjelasan doa (dari API equran.id) */
+  catatan?: string;
 }
 
-export type DoaCategory =
-  | "harian"
-  | "makan-minum"
-  | "tidur"
-  | "perjalanan"
-  | "ibadah"
-  | "keselamatan"
-  | "pagi-petang";
+export type DoaCategory = string; // Sekarang dinamis dari grup API
 
 export interface DoaCategoryInfo {
   id: DoaCategory;
@@ -53,4 +48,18 @@ export interface DzikirCounter {
   lastUpdated: number;
   completed: boolean;
   totalCompleted: number;
+}
+
+/**
+ * Tipe untuk response API equran.id/api/doa
+ */
+export interface ApiDoaItem {
+  id: number;
+  grup: string;
+  nama: string;
+  ar: string;
+  tr: string;
+  idn: string;
+  tentang: string;
+  tag: string[];
 }
