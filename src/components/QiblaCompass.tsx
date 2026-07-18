@@ -10,11 +10,11 @@ interface QiblaCompassProps {
 }
 
 export function QiblaCompass({ location }: QiblaCompassProps) {
-  const { qibla, rotation, isAligned, permission, requestPermission, startTracking, stopTracking, isTracking } = useQibla(location);
+  const { qibla, rotation, isAligned, permission, requestPermission, startTracking, stopTracking, isTracking, hasSignal, isWaitingForSignal } = useQibla(location);
   const [displayRotation, setDisplayRotation] = useState(0);
 
   useEffect(() => {
-    if (!isTracking) {
+    if (!isTracking || !hasSignal) {
       setDisplayRotation(0);
       return;
     }
@@ -30,7 +30,7 @@ export function QiblaCompass({ location }: QiblaCompassProps) {
     };
     raf = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(raf);
-  }, [rotation, isTracking]);
+  }, [rotation, isTracking, hasSignal]);
 
   const handleStart = async () => {
     if (permission === "prompt" || permission === "denied") {
@@ -143,6 +143,20 @@ export function QiblaCompass({ location }: QiblaCompassProps) {
           </div>
         )}
       </div>
+
+      {isWaitingForSignal && (
+        <div className="flex items-center gap-1.5 mb-2 text-xs text-muted-foreground">
+          <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
+          Mendeteksi sensor...
+        </div>
+      )}
+
+      {isTracking && !hasSignal && !isWaitingForSignal && (
+        <div className="flex items-center gap-1.5 mb-2 text-xs text-amber-600 dark:text-amber-400">
+          <AlertCircle className="w-3 h-3" aria-hidden="true" />
+          Sensor tidak merespon. Coba gunakan perangkat mobile atau pastikan sensor tersedia.
+        </div>
+      )}
 
       {!isTracking ? (
         <Button
