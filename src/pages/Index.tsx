@@ -31,9 +31,17 @@ interface IndexProps {
   onMenuClick: () => void;
 }
 
-const QUICK_ACTIONS = [
+interface QuickAction {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  badgeKey?: "dzikir";
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
   { to: "/jadwal-sholat", label: "Sholat", icon: Clock, color: "sky" },
-  { to: "/dzikir", label: "Dzikir", icon: BookHeart, color: "emerald", badgeKey: "dzikir" as const },
+  { to: "/dzikir", label: "Dzikir", icon: BookHeart, color: "emerald", badgeKey: "dzikir" },
   { to: "/tasbih", label: "Tasbih", icon: CircleDot, color: "rose" },
   { to: "/doa", label: "Doa", icon: Hand, color: "amber" },
   { to: "/asmaul-husna", label: "Asmaul", icon: Star, color: "violet" },
@@ -44,7 +52,7 @@ const QUICK_ACTIONS = [
   { to: "/live-makkah", label: "Live", icon: Video, color: "pink" },
   { to: "/catatan", label: "Catatan", icon: StickyNote, color: "lime" },
   { to: "/settings", label: "Setting", icon: SettingsIcon, color: "slate" },
-] as const;
+];
 
 const colorMap = {
   sky: { bg: "bg-sky-500/8", text: "text-sky-600 dark:text-sky-400", grad: "from-sky-500 to-sky-700" },
@@ -119,7 +127,7 @@ export default function Index({ onMenuClick }: IndexProps) {
 
       <main
         id="main-content"
-        className="container mx-auto px-3 py-3 pb-32 md:pb-12 max-w-5xl"
+        className="container mx-auto px-3 py-3 pb-36 md:pb-12 max-w-5xl"
         aria-labelledby="hero-title"
         style={{ overflowAnchor: "none" }}
       >
@@ -260,15 +268,9 @@ export default function Index({ onMenuClick }: IndexProps) {
 
         <section
           className="mb-4"
-          aria-label="Mode baca Al-Qur'an full"
+          aria-label="Murottal Al-Qur'an full"
           style={{ contain: "layout" }}
         >
-          <div className="flex items-center gap-1.5 mb-2 px-1">
-            <ListMusic className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-            <h2 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-              Mode Baca Full
-            </h2>
-          </div>
           <FullQuranPlayer />
         </section>
 
@@ -319,17 +321,6 @@ export default function Index({ onMenuClick }: IndexProps) {
           )}
         </section>
       </main>
-
-      {showJumpToTop && (
-        <button
-          type="button"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-24 right-4 z-30 w-11 h-11 rounded-2xl bg-card border border-border shadow-xl flex items-center justify-center hover:bg-muted active:scale-95 transition-all animate-fade-in"
-          aria-label="Scroll ke atas"
-        >
-          <ArrowUp className="w-5 h-5 text-foreground" aria-hidden="true" />
-        </button>
-      )}
 
       <PullToRefreshIndicator
         pullDistance={pullDistance}

@@ -403,6 +403,8 @@ export default function QuranReader() {
             <VerseCardFocused
               key={ayat.nomorAyat}
               ayat={ayat}
+              surahNumber={data.nomor}
+              surahName={data.namaLatin}
               showTransliteration={showTransliteration}
               fontSize={fontSize}
             />

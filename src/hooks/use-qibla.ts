@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { calculateQiblaBearing, normalizeDeviceHeading, type QiblaInfo, type DeviceOrientation } from "@/lib/qibla";
 import type { Location } from "@/lib/location";
 
@@ -76,7 +76,9 @@ export function useQibla(location: Location | null): UseQiblaReturn {
     return "granted";
   }, []);
 
-  const handleOrientation = useCallback((e: DeviceOrientationEvent) => {
+  // Stabilkan handleOrientation dengan ref supaya referensi tidak pernah berubah
+  const handleOrientationRef = useRef<(e: DeviceOrientationEvent) => void>(() => {});
+  handleOrientationRef.current = (e: DeviceOrientationEvent) => {
     const orient: DeviceOrientationEvent = e;
     const heading = normalizeDeviceHeading({
       alpha: orient.alpha,
@@ -86,26 +88,29 @@ export function useQibla(location: Location | null): UseQiblaReturn {
     if (heading !== null) {
       setDeviceHeading(heading);
     }
-  }, []);
+  };
 
   const startTracking = useCallback(() => {
     if (isTracking) return;
-    window.addEventListener("deviceorientation", handleOrientation, true);
+    const handler = handleOrientationRef.current;
+    window.addEventListener("deviceorientation", handler, true);
     setIsTracking(true);
-  }, [isTracking, handleOrientation]);
+  }, [isTracking]);
 
   const stopTracking = useCallback(() => {
     if (!isTracking) return;
-    window.removeEventListener("deviceorientation", handleOrientation, true);
+    const handler = handleOrientationRef.current;
+    window.removeEventListener("deviceorientation", handler, true);
     setIsTracking(false);
-  }, [isTracking, handleOrientation]);
+  }, [isTracking]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — selalu pakai handler terakhir via ref
   useEffect(() => {
+    const handler = handleOrientationRef.current;
     return () => {
-      window.removeEventListener("deviceorientation", handleOrientation, true);
+      window.removeEventListener("deviceorientation", handler, true);
     };
-  }, [handleOrientation]);
+  }, []);
 
   return {
     qibla,

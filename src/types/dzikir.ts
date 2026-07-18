@@ -48,6 +48,7 @@ export interface DzikirCounter {
   lastUpdated: number;
   completed: boolean;
   totalCompleted: number;
+  dateKey: string; // YYYY-MM-DD — untuk auto-reset harian
 }
 
 /**

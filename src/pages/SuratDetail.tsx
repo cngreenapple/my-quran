@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Play, MapPin, BookOpen, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Play, MapPin, BookOpen, Maximize2, ChevronLeft, ChevronRight, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { VerseCard } from "@/components/VerseCard";
@@ -13,6 +13,8 @@ import { useReadingStats } from "@/hooks/use-reading-stats";
 import { useAudio } from "@/contexts/audio-context";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useSurahList } from "@/hooks/use-surah-list";
+import { SurahNavigator } from "@/components/SurahNavigator";
 import { cn } from "@/lib/utils";
 
 interface SuratDetailProps {
@@ -30,6 +32,8 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
   const { trackSurahOpen, trackAyatRead } = useReadingStats();
   const { play, currentSurah, togglePlay } = useAudio();
   const { settings } = useAppSettings();
+  const { data: surahList } = useSurahList();
+  const [surahNavOpen, setSurahNavOpen] = useState(false);
   const readAyatsRef = useRef<Set<number>>(new Set());
 
   useDocumentTitle(data ? `${data.nomor}. ${data.namaLatin}` : undefined);
@@ -151,6 +155,16 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Button
+                  onClick={() => setSurahNavOpen((v) => !v)}
+                  size="sm"
+                  className="h-7 px-2.5 rounded-full gap-1.5 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm"
+                  aria-label="Buka daftar surat"
+                  aria-expanded={surahNavOpen}
+                >
+                  <List className="w-3 h-3" aria-hidden="true" />
+                  <span className="hidden sm:inline">Daftar Surat</span>
+                </Button>
+                <Button
                   asChild
                   size="sm"
                   className="h-7 px-2.5 rounded-full gap-1.5 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-sm"
@@ -196,6 +210,13 @@ export default function SuratDetail({ onMenuClick }: SuratDetailProps) {
             )}
           </div>
         </section>
+
+        <SurahNavigator
+          open={surahNavOpen}
+          onClose={() => setSurahNavOpen(false)}
+          surahList={surahList}
+          currentSurahNumber={data.nomor}
+        />
 
         {data.nomor !== 1 && data.nomor !== 9 && (
           <div className="text-center mb-4 py-2.5 border-y border-border/60">

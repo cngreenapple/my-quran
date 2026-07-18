@@ -18,10 +18,10 @@ export function CollapsedTrigger({ onClick, className }: CollapsedTriggerProps) 
         "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10",
         className,
       )}
-      aria-label="Buka mode baca Al-Qur'an full"
+      aria-label="Buka murottal Al-Qur'an full"
     >
       <ListMusic className="w-3.5 h-3.5" aria-hidden="true" />
-      <span>Baca Full</span>
+      <span>Murottal Full</span>
     </Button>
   );
 }

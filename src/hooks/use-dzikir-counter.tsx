@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { DzikirCounter } from "@/types/dzikir";
-import { isSameDay } from "@/lib/date";
+import { isSameDay, getDateKey } from "@/lib/date";
 
 const STORAGE_KEY = "quran-dzikir-counters";
 
@@ -45,8 +45,24 @@ export function DzikirProvider({ children }: { children: ReactNode }) {
     (categoryId: string, itemId: string, target: number): DzikirCounter => {
       const key = makeKey(categoryId, itemId);
       const existing = counters[key];
+      const today = getDateKey();
+
+      // Auto-reset jika beda hari
+      if (existing && existing.dateKey !== today) {
+        return {
+          itemId,
+          categoryId,
+          current: 0,
+          target,
+          lastUpdated: Date.now(),
+          completed: false,
+          totalCompleted: existing.totalCompleted,
+          dateKey: today,
+        };
+      }
+
       if (existing && existing.target === target) return existing;
-      return { itemId, categoryId, current: 0, target, lastUpdated: Date.now(), completed: false, totalCompleted: 0 };
+      return { itemId, categoryId, current: 0, target, lastUpdated: Date.now(), completed: false, totalCompleted: 0, dateKey: today };
     },
     [counters],
   );
@@ -55,10 +71,30 @@ export function DzikirProvider({ children }: { children: ReactNode }) {
     setCounters((prev) => {
       const key = makeKey(categoryId, itemId);
       const existing = prev[key];
-      const current = existing ? Math.min(existing.current + 1, target) : 1;
+      const today = getDateKey();
+
+      // Auto-reset jika beda hari
+      const isValid = existing && existing.dateKey === today;
+      const baseCurrent = isValid ? existing.current : 0;
+      const baseCompleted = isValid ? existing.completed : false;
+
+      const current = Math.min(baseCurrent + 1, target);
       const completed = current >= target;
-      const totalCompleted = existing ? existing.totalCompleted + (completed && !existing.completed ? 1 : 0) : 0;
-      return { ...prev, [key]: { itemId, categoryId, current, target, lastUpdated: Date.now(), completed, totalCompleted } };
+      const totalCompleted = (existing?.totalCompleted ?? 0) + (completed && !baseCompleted ? 1 : 0);
+
+      return {
+        ...prev,
+        [key]: {
+          itemId,
+          categoryId,
+          current,
+          target,
+          lastUpdated: Date.now(),
+          completed,
+          totalCompleted,
+          dateKey: today,
+        },
+      };
     });
   }, []);
 
@@ -66,7 +102,20 @@ export function DzikirProvider({ children }: { children: ReactNode }) {
     setCounters((prev) => {
       const key = makeKey(categoryId, itemId);
       const existing = prev[key];
-      return { ...prev, [key]: { itemId, categoryId, current: 0, target, lastUpdated: Date.now(), completed: false, totalCompleted: existing?.totalCompleted ?? 0 } };
+      const today = getDateKey();
+      return {
+        ...prev,
+        [key]: {
+          itemId,
+          categoryId,
+          current: 0,
+          target,
+          lastUpdated: Date.now(),
+          completed: false,
+          totalCompleted: existing?.totalCompleted ?? 0,
+          dateKey: today,
+        },
+      };
     });
   }, []);
 
@@ -83,8 +132,8 @@ export function DzikirProvider({ children }: { children: ReactNode }) {
   const resetAll = useCallback(() => setCounters({}), []);
 
   const totalCompletedToday = useMemo(() => {
-    const now = Date.now();
-    return Object.values(counters).filter((c) => c.completed && isSameDay(c.lastUpdated, now)).length;
+    const today = getDateKey();
+    return Object.values(counters).filter((c) => c.completed && c.dateKey === today).length;
   }, [counters]);
 
   const value = useMemo<DzikirContextValue>(

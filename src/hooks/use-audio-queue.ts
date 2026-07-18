@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, useReducer } from "react";
 import type { Surah } from "@/types/quran";
 
 export type RepeatMode = "off" | "queue" | "single";
@@ -8,6 +8,7 @@ interface AudioQueueState {
   currentIndex: number;
   isShuffled: boolean;
   repeatMode: RepeatMode;
+  pendingPlayIndex: number; // -1 = stop, >=0 = play at index, -2 = idle
 }
 
 interface UseAudioQueueOptions {
@@ -55,6 +56,7 @@ export function useAudioQueue({
     currentIndex: 0,
     isShuffled: false,
     repeatMode: "off",
+    pendingPlayIndex: -2,
   });
 
   const stateRef = useRef(state);
@@ -117,42 +119,65 @@ export function useAudioQueue({
     onStopRef.current();
   }, []);
 
+  /**
+   * Helper: play surah at a given queue index and return new state.
+   * Separated from setState updater to avoid side effects inside updater functions.
+   */
+  const playAtIndex = useCallback((queue: number[], index: number) => {
+    const surahNum = queue[index];
+    if (surahNum !== undefined) {
+      onPlaySurahRef.current(surahNum, getSurahName(surahNum));
+    }
+  }, [getSurahName]);
+
   const next = useCallback(() => {
     setState((prev) => {
       if (prev.queue.length === 0) return prev;
       const nextIdx = prev.currentIndex + 1;
       if (nextIdx >= prev.queue.length) {
         if (prev.repeatMode === "queue") {
-          onPlaySurahRef.current(prev.queue[0], getSurahName(prev.queue[0]));
-          return { ...prev, currentIndex: 0 };
+          // Akan di-play oleh useEffect di bawah
+          return { ...prev, pendingPlayIndex: 0 };
         }
-        onStopRef.current();
-        return prev;
+        return { ...prev, pendingPlayIndex: -1 }; // signal stop
       }
-      onPlaySurahRef.current(prev.queue[nextIdx], getSurahName(prev.queue[nextIdx]));
-      return { ...prev, currentIndex: nextIdx };
+      return { ...prev, pendingPlayIndex: nextIdx };
     });
-  }, [getSurahName]);
+  }, []);
 
   const prev = useCallback(() => {
     setState((prev) => {
       if (prev.queue.length === 0) return prev;
       const prevIdx = Math.max(0, prev.currentIndex - 1);
-      onPlaySurahRef.current(prev.queue[prevIdx], getSurahName(prev.queue[prevIdx]));
-      return { ...prev, currentIndex: prevIdx };
+      return { ...prev, pendingPlayIndex: prevIdx };
     });
-  }, [getSurahName]);
+  }, []);
 
   const jumpTo = useCallback(
     (queueIndex: number) => {
       setState((prev) => {
         if (queueIndex < 0 || queueIndex >= prev.queue.length) return prev;
-        onPlaySurahRef.current(prev.queue[queueIndex], getSurahName(prev.queue[queueIndex]));
-        return { ...prev, currentIndex: queueIndex };
+        return { ...prev, pendingPlayIndex: queueIndex };
       });
     },
-    [getSurahName],
+    [],
   );
+
+  // Eksekusi side effect (play/stop) setelah state diupdate
+  // Juga update currentIndex agar UI (PlayerHeader) sinkron
+  const lastPendingRef = useRef(-2);
+  useEffect(() => {
+    if (state.pendingPlayIndex === lastPendingRef.current) return;
+    lastPendingRef.current = state.pendingPlayIndex;
+
+    if (state.pendingPlayIndex === -1) {
+      onStopRef.current();
+    } else if (state.pendingPlayIndex >= 0 && state.pendingPlayIndex < state.queue.length) {
+      // Update currentIndex dulu baru play
+      setState((prev) => ({ ...prev, currentIndex: state.pendingPlayIndex }));
+      playAtIndex(state.queue, state.pendingPlayIndex);
+    }
+  }, [state.pendingPlayIndex, state.queue, playAtIndex]);
 
   const toggleShuffle = useCallback(() => {
     setState((prev) => {
@@ -208,30 +233,29 @@ export function useAudioQueue({
       }
 
       // Queue handle sendiri — suppress default
+      // Semua operasi via pendingPlayIndex agar konsisten dengan next()/prev()/jumpTo()
+      // dan UI (PlayerHeader) selalu sinkron dengan surah yang diputar
       if (s.repeatMode === "single") {
-        onPlaySurahRef.current(surahNumber, getSurahName(surahNumber));
+        setState((prev) => ({ ...prev, pendingPlayIndex: idx }));
         return true;
       }
 
       const nextIdx = idx + 1;
       if (nextIdx < s.queue.length) {
-        setState((prev) => ({ ...prev, currentIndex: nextIdx }));
-        onPlaySurahRef.current(s.queue[nextIdx], getSurahName(s.queue[nextIdx]));
+        setState((prev) => ({ ...prev, pendingPlayIndex: nextIdx }));
         return true;
       }
 
       if (s.repeatMode === "queue") {
-        setState((prev) => ({ ...prev, currentIndex: 0 }));
-        onPlaySurahRef.current(s.queue[0], getSurahName(s.queue[0]));
+        setState((prev) => ({ ...prev, pendingPlayIndex: 0 }));
         return true;
       }
 
       // Akhir queue + repeat off → stop
-      setState((prev) => ({ ...prev, queue: [], currentIndex: 0 }));
-      onStopRef.current();
+      setState((prev) => ({ ...prev, pendingPlayIndex: -1, queue: [], currentIndex: 0 }));
       return true;
     },
-    [getSurahName],
+    [],
   );
 
   const currentSurah = state.queue[state.currentIndex] ?? null;

@@ -55,6 +55,7 @@ function getAudioErrorMessage(error: unknown): string {
 export function AyatAudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playTokenRef = useRef(0);
+  const currentAyatRef = useRef<AyatAudioState | null>(null);
   const [currentAyat, setCurrentAyat] = useState<AyatAudioState | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -155,11 +156,16 @@ export function AyatAudioProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Sync ref dengan state
+  useEffect(() => {
+    currentAyatRef.current = currentAyat;
+  }, [currentAyat]);
+
   // Subscribe ke coordination events - pause ketika surah audio dimulai
   // Deps kosong: subscribe sekali, ref untuk akses current state
   useEffect(() => {
     const unsubscribe = subscribeToStop((event) => {
-      if (event.mode !== "ayat" && currentAyat !== null) {
+      if (event.mode !== "ayat" && currentAyatRef.current !== null) {
         const audio = audioRef.current;
         if (audio && !audio.paused) {
           audio.pause();

@@ -34,7 +34,7 @@ export function PlayerHeader({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider leading-none">
-            Mode Baca Full
+            Murottal Full
           </p>
           {currentSurah ? (
             <>
@@ -47,7 +47,7 @@ export function PlayerHeader({
             </>
           ) : (
             <p className="text-[11px] text-foreground font-semibold truncate leading-tight mt-0.5">
-              Pilih surah untuk mulai
+              Pilih surah untuk didengar
             </p>
           )}
         </div>
@@ -75,7 +75,7 @@ export function PlayerHeader({
             size="icon"
             onClick={onStop}
             className="rounded-full h-7 w-7 text-muted-foreground hover:text-destructive"
-            aria-label="Hentikan mode baca full"
+            aria-label="Hentikan murottal"
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
           </Button>

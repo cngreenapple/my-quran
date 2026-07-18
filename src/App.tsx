@@ -13,6 +13,7 @@ import { ReadingStatsProvider } from "@/hooks/use-reading-stats";
 import { AppSettingsProvider } from "@/hooks/use-app-settings";
 import { BookmarkProvider } from "@/hooks/use-bookmarks";
 import { NotesProvider } from "@/hooks/use-notes";
+import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 import { AppDrawer } from "@/components/AppDrawer";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { PWAStatusBar } from "@/components/PWAStatusBar";
@@ -114,6 +115,7 @@ function AppShell() {
 
       <AudioPlayer />
       <PWAStatusBar />
+      <ScrollToTopButton />
     </>
   );
 }

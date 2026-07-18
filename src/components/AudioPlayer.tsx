@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { Play, Pause, X, Volume2, SkipForward, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAudio } from "@/contexts/audio-context";
@@ -40,35 +40,16 @@ const AudioPlayerContent = memo(function AudioPlayerContent() {
     currentSurah,
     currentSurahName,
     isPlaying,
-    error,
     isLoadingAudio,
     play,
     togglePlay,
     stop,
-    seek,
   } = useAudio();
   const isMobile = useIsMobile();
   const { data: surahList } = useSurahList();
 
   const nextSurah = currentSurah ? surahList?.find((s) => s.nomor === currentSurah + 1) : undefined;
   const hasNext = !!nextSurah && (currentSurah ?? 0) < 114;
-
-  const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const percent = Math.max(0, Math.min(1, x / rect.width));
-    seek(percent * getDuration());
-  };
-
-  const handleSeekKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      seek(Math.max(0, getProgress() - 5));
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      seek(getProgress() + 5);
-    }
-  };
 
   const handleNext = () => {
     if (nextSurah) play(nextSurah.nomor, nextSurah.namaLatin);
@@ -90,12 +71,9 @@ const AudioPlayerContent = memo(function AudioPlayerContent() {
         isLoadingAudio={isLoadingAudio}
         togglePlay={togglePlay}
         currentSurahName={currentSurahName}
-        onSeekClick={handleSeekClick}
-        onSeekKey={handleSeekKey}
         hasNext={hasNext}
         onNext={handleNext}
         onStop={stop}
-        error={error}
         nextSurahName={nextSurah?.namaLatin}
       />
     </div>
@@ -103,23 +81,17 @@ const AudioPlayerContent = memo(function AudioPlayerContent() {
 });
 
 // ============================================================================
-// Sub-komponen: ProgressSection
+// Sub-komponen: ProgressSection (isolated — hanya re-render saat progress berubah)
 // ============================================================================
-// Progress display di-isolasi supaya progress tick (4x/detik) hanya
-// re-render komponen ini, BUKAN parent shell (yang handle state lain).
-// Ini mitigasi glitch karena seluruh card re-paint pada tiap tick.
 
 interface ProgressSectionProps {
   isPlaying: boolean;
   isLoadingAudio: boolean;
   togglePlay: () => void;
   currentSurahName: string;
-  onSeekClick: (e: React.MouseEvent<HTMLDivElement>) => void;
-  onSeekKey: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   hasNext: boolean;
   onNext: () => void;
   onStop: () => void;
-  error: string | null;
   nextSurahName?: string;
 }
 
@@ -128,20 +100,36 @@ const ProgressSection = memo(function ProgressSection({
   isLoadingAudio,
   togglePlay,
   currentSurahName,
-  onSeekClick,
-  onSeekKey,
   hasNext,
   onNext,
   onStop,
-  error,
   nextSurahName,
 }: ProgressSectionProps) {
-  // Pakai hook lokal untuk progress/duration — supaya hook ini
-  // subscribe ke progress changes tanpa parent ikut re-render
-  // (parent tetap stabil karena pakai useAudio untuk state lain,
-  //  dan progress re-render terisolasi di komponen ini).
-  const { progress, duration } = useAudio();
+  // Pakai useAudio lokal untuk progress/duration — hanya komponen ini yang re-render
+  // saat progress tick, bukan parent shell.
+  const { progress, duration, error, seek } = useAudio();
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
+
+  // Pre-compute formatDuration sekali saja
+  const durationStr = formatDuration(duration);
+  const progressStr = formatDuration(progress);
+
+  const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(1, x / rect.width));
+    seek(percent * duration);
+  };
+
+  const handleSeekKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      seek(Math.max(0, progress - 5));
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      seek(progress + 5);
+    }
+  };
 
   if (error) {
     return (
@@ -188,20 +176,20 @@ const ProgressSection = memo(function ProgressSection({
                 {currentSurahName}
               </p>
               <span className="text-[9px] text-muted-foreground font-mono shrink-0 tabular-nums">
-                {formatDuration(progress)} / {formatDuration(duration)}
+                {progressStr} / {durationStr}
               </span>
             </div>
             <div
               className="relative h-1 bg-muted rounded-full cursor-pointer group/progress will-change-[background-position]"
-              onClick={onSeekClick}
-              onKeyDown={onSeekKey}
+              onClick={handleSeekClick}
+              onKeyDown={handleSeekKey}
               role="slider"
               tabIndex={0}
               aria-label="Audio progress"
               aria-valuenow={Math.round(progressPercent)}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-valuetext={`${formatDuration(progress)} dari ${formatDuration(duration)}`}
+              aria-valuetext={`${progressStr} dari ${durationStr}`}
             >
               <div
                 className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-[width] duration-100 ease-linear"
@@ -241,13 +229,3 @@ const ProgressSection = memo(function ProgressSection({
     </div>
   );
 });
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-// Placeholder — di real implementation, parent pass progress/duration via prop.
-// Tapi karena parent component (AudioPlayerContent) re-render tiap tick juga,
-// solusi paling sederhana: ProgressSection konsumsi useAudio sendiri.
-declare function getProgress(): number;
-declare function getDuration(): number;

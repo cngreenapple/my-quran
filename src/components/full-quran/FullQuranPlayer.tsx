@@ -15,7 +15,7 @@ interface FullQuranPlayerProps {
 }
 
 /**
- * FullQuranPlayer — mode baca Al-Qur'an full.
+ * FullQuranPlayer — pemutar murottal Al-Qur'an full.
  *
  * Anti-glitch strategy (mobile):
  * - Area expandable di-wrap `SmoothHeight` yang pakai CSS `max-height` transition

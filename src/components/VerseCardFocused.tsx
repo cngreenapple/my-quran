@@ -1,9 +1,14 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import type { Ayat } from "@/types/quran";
+import { AyatAudioButton } from "@/components/AyatAudioButton";
 
 interface VerseCardFocusedProps {
   ayat: Ayat;
+  /** Nomor surah (untuk audio button) */
+  surahNumber: number;
+  /** Nama surah (untuk audio button) */
+  surahName: string;
   /** Tampilkan transliterasi latin di bawah ayat Arab */
   showTransliteration: boolean;
   /** 1-5 scale (1=sedang, 5=sangat besar). Default 3. */
@@ -39,6 +44,8 @@ const lineHeightMap: Record<1 | 2 | 3 | 4 | 5, string> = {
  */
 export const VerseCardFocused = memo(function VerseCardFocused({
   ayat,
+  surahNumber,
+  surahName,
   showTransliteration,
   fontSize,
 }: VerseCardFocusedProps) {
@@ -47,9 +54,9 @@ export const VerseCardFocused = memo(function VerseCardFocused({
       id={`ayat-${ayat.nomorAyat}`}
       className="group flex items-start gap-3 sm:gap-5 py-5 sm:py-7 px-3 sm:px-5 border-b border-border/20 last:border-0 scroll-mt-24 transition-colors hover:bg-muted/30"
     >
-      {/* Number badge - traditional 8-pointed star ornament */}
-      <div className="shrink-0 pt-1 sm:pt-2" aria-hidden="true">
-        <div className="relative w-9 h-9 sm:w-11 sm:h-11">
+      {/* Number badge + audio — traditional 8-pointed star ornament */}
+      <div className="shrink-0 pt-1 sm:pt-2 flex flex-col items-center gap-1.5">
+        <div className="relative w-9 h-9 sm:w-11 sm:h-11" aria-hidden="true">
           <svg
             viewBox="0 0 48 48"
             className="w-full h-full text-primary/30 group-hover:text-primary/45 transition-colors"
@@ -65,6 +72,15 @@ export const VerseCardFocused = memo(function VerseCardFocused({
               {ayat.nomorAyat}
             </span>
           </div>
+        </div>
+
+        {/* Audio per ayat — muncul saat hover / playing */}
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200" aria-hidden="true">
+          <AyatAudioButton
+            surahNumber={surahNumber}
+            ayatNumber={ayat.nomorAyat}
+            size="sm"
+          />
         </div>
       </div>
 

@@ -9,7 +9,11 @@ import { useEffect } from "react";
  *
  * Hook ini handle:
  * - Auto-register `sw.js` di root
- * - Listen untuk update event → reload page (seamless update)
+ * - Listen untuk update event → trigger custom event `sw-update-available`
+ *   yang bisa di-listen oleh komponen UI (misal AppShell) untuk
+ *   menampilkan snackbar "Update tersedia. Muat ulang?"
+ * - Tidak langsung reload halaman — menghindari gangguan saat user
+ *   sedang baca Al-Qur'an.
  * - Error handling yang silent (gagal register = gak critical,
  *   app tetap jalan normal tanpa offline support)
  */
@@ -32,8 +36,8 @@ export function useServiceWorker() {
           console.warn("[SW] Update check failed", err);
         });
 
-        // Listen untuk update — kalau ada SW baru, reload supaya
-        // user langsung pakai versi terbaru
+        // Listen untuk update — kalau ada SW baru, trigger custom event
+        // sehingga UI bisa menampilkan snackbar, bukan reload paksa
         registration.addEventListener("updatefound", () => {
           const newWorker = registration.installing;
           if (!newWorker) return;
@@ -43,11 +47,13 @@ export function useServiceWorker() {
               newWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              // New SW installed tapi belum active. Force activate
-              // supaya user tidak stuck di versi lama.
-              console.log("[SW] New version installed, activating...");
-              newWorker.postMessage("SKIP_WAITING");
-              window.location.reload();
+              console.log("[SW] New version available");
+              // Trigger custom event untuk UI snackbar
+              window.dispatchEvent(
+                new CustomEvent("sw-update-available", {
+                  detail: { registration, newWorker },
+                }),
+              );
             }
           });
         });

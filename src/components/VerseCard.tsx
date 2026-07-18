@@ -9,7 +9,6 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useNotes } from "@/hooks/use-notes";
 import { AyatNotesDialog } from "@/components/AyatNotesDialog";
 import { AyatAudioButton } from "@/components/AyatAudioButton";
-import { useAudio } from "@/contexts/audio-context";
 import { cn } from "@/lib/utils";
 
 interface VerseCardProps {
@@ -40,19 +39,11 @@ export const VerseCard = memo(
     const hasTafsir = !!tafsirText;
     const { isBookmarked, toggleBookmark } = useBookmarks();
     const { getNotesForAyat } = useNotes();
-    const { play, currentSurah, togglePlay } = useAudio();
     const [notesDialogOpen, setNotesDialogOpen] = useState(false);
     const [tafsirOpen, setTafsirOpen] = useState(defaultShowTafsir);
 
     const bookmarked = isBookmarked(surahNumber, ayat.nomorAyat);
     const notesCount = getNotesForAyat(surahNumber, ayat.nomorAyat).length;
-    const isSurahPlaying = currentSurah === surahNumber;
-
-    const handlePlaySurah = () => {
-      if ("vibrate" in navigator) navigator.vibrate(10);
-      if (isSurahPlaying) togglePlay();
-      else play(surahNumber, surahName);
-    };
 
     const handleShare = async () => {
       await shareVerseNative({ surahNumber, surahName, ayat });
@@ -155,24 +146,6 @@ export const VerseCard = memo(
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 pt-0.5 flex-wrap">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handlePlaySurah}
-                    type="button"
-                    className={cn(
-                      "h-7 px-2.5 gap-1 rounded-full text-[11px] font-medium",
-                      isSurahPlaying
-                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                    aria-label={isSurahPlaying ? `Jeda surah ${surahName}` : `Putar surah ${surahName}`}
-                    aria-pressed={isSurahPlaying}
-                  >
-                    <span className="text-[10px]">▶</span>
-                    {isSurahPlaying ? "Jeda" : "Putar"}
-                  </Button>
-
                   <Button
                     variant="ghost"
                     size="sm"

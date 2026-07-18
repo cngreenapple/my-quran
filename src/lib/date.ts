@@ -66,12 +66,12 @@ export function isSameDay(t1: number | Date, t2: number | Date): boolean {
   return getDateKey(t1) === getDateKey(t2);
 }
 
-function isHijriLeapYear(year: number): boolean {
+export function isHijriLeapYear(year: number): boolean {
   const r = year % 30;
   return [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29].includes(r);
 }
 
-function getHijriMonthLengths(year: number): number[] {
+export function getHijriMonthLengths(year: number): number[] {
   return isHijriLeapYear(year)
     ? [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 30]
     : [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];

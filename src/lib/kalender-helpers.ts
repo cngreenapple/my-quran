@@ -6,20 +6,10 @@
  * - getHijriMonthInfo: info bulan Hijriah (days in month, start weekday)
  *
  * Untuk konversi Masehi ↔ Hijriah dan helper JDN pakai `lib/date.ts`
- * (gregorianToJDN, jdnToHijri).
+ * (gregorianToJDN, jdnToHijri, isHijriLeapYear, getHijriMonthLengths).
  */
 
-const HIJRI_LEAP_YEARS_PATTERN = [2, 5, 7, 10, 13, 16, 18, 21, 24, 26, 29];
-
-function isHijriLeapYear(year: number): boolean {
-  return HIJRI_LEAP_YEARS_PATTERN.includes(year % 30);
-}
-
-function getHijriMonthLengths(year: number): number[] {
-  return isHijriLeapYear(year)
-    ? [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 30]
-    : [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
-}
+import { isHijriLeapYear, getHijriMonthLengths } from "@/lib/date";
 
 /**
  * Info bulan Masehi untuk grid kalender.
@@ -75,7 +65,7 @@ function jdnToDate(jdn: number): Date {
   const b = Math.floor((4 * a + 3) / 146097);
   const c = a - Math.floor((146097 * b) / 4);
   const d = Math.floor((4 * c + 3) / 1461);
-  const e = c - Math.floor((1461 * d) / 1461);
+  const e = c - Math.floor((1461 * d) / 4);
   const m = Math.floor((5 * e + 2) / 153);
   const day = e - Math.floor((153 * m + 2) / 5) + 1;
   const month = m + 3 - 12 * Math.floor(m / 10);
