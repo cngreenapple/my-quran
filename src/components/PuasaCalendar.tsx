@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, Moon, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { gregorianMonthInfo, getHijriMonthInfo } from "@/lib/kalender-helpers";
+import { gregorianMonthInfo } from "@/lib/kalender-helpers";
 import { gregorianToJDN, jdnToHijri, INDONESIAN_WEEKDAYS_SHORT, HIJRI_MONTH_NAMES, GREGORIAN_MONTH_NAMES } from "@/lib/date";
 
 /** Jenis puasa yang bisa di-mark di kalender */
 interface FastingMarker {
-  date: Date; // Tanggal Gregorian
+  date: Date;
   type: "weekly" | "ayyamul-bidh" | "yearly";
   label: string;
   color: string;
@@ -17,13 +17,9 @@ interface FastingMarker {
  *
  * Fitur:
  * - Kalender bulan Masehi + tanggal Hijriah
- * - Tanda untuk hari puasa:
- *   - 🟢 Senin/Kamis
- *   - 🟡 Ayyamul Bidh (13,14,15 Hijriah)
- *   - 🔴 Puasa tahunan (Arafah, Asyura, dll)
+ * - Teks keterangan langsung di setiap tanggal puasa (bukan dot)
  * - Navigasi prev/next bulan
- * - Legenda warna
- * - Scroll ke hari ini otomatis
+ * - Keterangan lengkap di footer
  */
 export function PuasaCalendar() {
   const today = useMemo(() => new Date(), []);
@@ -42,7 +38,7 @@ export function PuasaCalendar() {
       const date = new Date(year, month, day);
       const jdn = gregorianToJDN(year, month + 1, day);
       const hijri = jdnToHijri(jdn);
-      const weekday = date.getDay(); // 0=Minggu, 1=Senin, ...
+      const weekday = date.getDay();
 
       // 1. Senin & Kamis
       if (weekday === 1 || weekday === 4) {
@@ -55,16 +51,16 @@ export function PuasaCalendar() {
       }
 
       // 3. Puasa tahunan
-      if (hijri.month === 12 && hijri.day === 9) { // 9 Dzulhijjah = Arafah
+      if (hijri.month === 12 && hijri.day === 9) {
         markers.push({ date, type: "yearly", label: "Arafah", color: "rose" });
       }
-      if (hijri.month === 1 && hijri.day === 9) { // 9 Muharram = Tasu'a
+      if (hijri.month === 1 && hijri.day === 9) {
         markers.push({ date, type: "yearly", label: "Tasu'a", color: "sky" });
       }
-      if (hijri.month === 1 && hijri.day === 10) { // 10 Muharram = Asyura
+      if (hijri.month === 1 && hijri.day === 10) {
         markers.push({ date, type: "yearly", label: "Asyura", color: "violet" });
       }
-      if (hijri.month === 10 && hijri.day >= 1 && hijri.day <= 6) { // 1-6 Syawal
+      if (hijri.month === 10 && hijri.day >= 1 && hijri.day <= 6) {
         markers.push({ date, type: "yearly", label: "Syawal", color: "emerald" });
       }
     }
@@ -72,7 +68,7 @@ export function PuasaCalendar() {
     return markers;
   }, [year, month, monthInfo.daysInMonth]);
 
-  // Himpun marker per tanggal untuk lookup O(1)
+  // Himpun marker per tanggal untuk lookup cepat
   const markersByDate = useMemo(() => {
     const map = new Map<string, FastingMarker[]>();
     for (const marker of fastingMarkers) {
@@ -88,10 +84,9 @@ export function PuasaCalendar() {
   const nextMonth = () => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
   const goToday = () => setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
 
-  // Cek apakah hari ini ada di bulan yang tampil
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
 
-  // Grid: 6 minggu x 7 hari = 42 sel
+  // Grid kalender
   const grid: Array<{ day: number | null; isToday: boolean; isCurrentMonth: boolean; markers: FastingMarker[] }> = [];
   const startOffset = monthInfo.startWeekday;
   const totalCells = Math.ceil((startOffset + monthInfo.daysInMonth) / 7) * 7;
@@ -109,14 +104,6 @@ export function PuasaCalendar() {
       markers: key ? markersByDate.get(key) || [] : [],
     });
   }
-
-  const LEGEND = [
-    { color: "bg-emerald-400", label: "Senin/Kamis" },
-    { color: "bg-amber-400", label: "Ayyamul Bidh" },
-    { color: "bg-rose-400", label: "Arafah" },
-    { color: "bg-violet-400", label: "Asyura/Tasu'a" },
-    { color: "bg-sky-400", label: "Syawal" },
-  ];
 
   const hijriMonthInfo = useMemo(() => {
     const jdn = gregorianToJDN(year, month + 1, 1);
@@ -143,7 +130,6 @@ export function PuasaCalendar() {
           </button>
         </div>
 
-        {/* Navigation */}
         <div className="flex items-center justify-between">
           <button onClick={prevMonth} className="rounded-full h-7 w-7 flex items-center justify-center hover:bg-muted transition-colors" aria-label="Bulan sebelumnya">
             <ChevronLeft className="w-4 h-4 text-foreground" />
@@ -164,7 +150,6 @@ export function PuasaCalendar() {
 
       {/* Calendar grid */}
       <div className="p-3">
-        {/* Weekday headers */}
         <div className="grid grid-cols-7 mb-1">
           {INDONESIAN_WEEKDAYS_SHORT.map((day) => (
             <div key={day} className="text-center text-[10px] font-bold text-muted-foreground py-1">
@@ -173,49 +158,53 @@ export function PuasaCalendar() {
           ))}
         </div>
 
-        {/* Days grid */}
         <div className="grid grid-cols-7 gap-0.5">
           {grid.map((cell, idx) => {
             const isWeekly = cell.markers.some((m) => m.type === "weekly");
             const isAyyamul = cell.markers.some((m) => m.type === "ayyamul-bidh");
             const isYearly = cell.markers.some((m) => m.type === "yearly");
             const hasMarker = cell.markers.length > 0;
-            const dotColor = isYearly ? "bg-rose-400" : isAyyamul ? "bg-amber-400" : "bg-emerald-400";
+
+            // Tentukan warna background & teks marker
+            const markerBg = isYearly ? "bg-rose-500/12" : isAyyamul ? "bg-amber-500/12" : isWeekly ? "bg-emerald-500/12" : "";
+            const markerText = isYearly ? "text-rose-700 dark:text-rose-400" : isAyyamul ? "text-amber-700 dark:text-amber-400" : isWeekly ? "text-emerald-700 dark:text-emerald-400" : "";
+
+            // Label keterangan
+            const label = isYearly
+              ? cell.markers.find((m) => m.type === "yearly")?.label
+              : isAyyamul
+                ? "Ayyamul"
+                : isWeekly
+                  ? "Sn/Km"
+                  : null;
 
             return (
               <div key={idx} className="aspect-square flex flex-col items-center justify-center relative">
                 {cell.day ? (
-                  <>
-                    <div
+                  <div
+                    className={cn(
+                      "w-full h-full rounded-lg flex flex-col items-center justify-center relative text-xs font-medium transition-colors",
+                      cell.isToday && "ring-2 ring-violet-500/50 bg-violet-500/10",
+                      hasMarker && !cell.isToday && markerBg,
+                    )}
+                  >
+                    <span
                       className={cn(
-                        "w-full h-full rounded-lg flex flex-col items-center justify-center relative text-xs font-medium transition-colors",
-                        cell.isToday && "ring-2 ring-violet-500/50 bg-violet-500/10",
-                        hasMarker && !cell.isToday && "bg-muted/30",
+                        "tabular-nums leading-none",
+                        cell.isToday ? "text-violet-700 dark:text-violet-400 font-bold" : "text-foreground",
+                        !cell.isCurrentMonth && "text-muted-foreground/40",
                       )}
                     >
-                      <span
-                        className={cn(
-                          "tabular-nums",
-                          cell.isToday ? "text-violet-700 dark:text-violet-400 font-bold" : "text-foreground",
-                          !cell.isCurrentMonth && "text-muted-foreground/40",
-                        )}
-                      >
-                        {cell.day}
+                      {cell.day}
+                    </span>
+
+                    {/* TEKS KETERANGAN langsung di bawah tanggal, bukan dot */}
+                    {label && (
+                      <span className={cn("text-[7px] leading-tight font-semibold mt-0.5 px-0.5 text-center", markerText)}>
+                        {label}
                       </span>
-                      {/* Dot indicator untuk puasa */}
-                      {hasMarker && (
-                        <div className="flex gap-0.5 mt-0.5">
-                          <span className={cn("w-1 h-1 rounded-full", dotColor)} />
-                        </div>
-                      )}
-                    </div>
-                    {/* Label tooltip untuk hari puasa */}
-                    {hasMarker && (
-                      <div className="hidden group-hover:block absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap bg-popover text-popover-foreground text-[8px] px-1.5 py-0.5 rounded shadow-lg z-10">
-                        {cell.markers.map((m) => m.label).join(" + ")}
-                      </div>
                     )}
-                  </>
+                  </div>
                 ) : (
                   <div className="w-full h-full" />
                 )}
@@ -225,20 +214,19 @@ export function PuasaCalendar() {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="px-4 py-2.5 border-t border-border/40 bg-muted/20">
-        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1">
+      {/* Keterangan footer */}
+      <div className="px-4 py-2 border-t border-border/40 bg-muted/20">
+        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
           <Info className="w-3 h-3" aria-hidden="true" />
-          Legenda
+          Keterangan
         </p>
-        <div className="flex flex-wrap gap-2">
-          {LEGEND.map((item) => (
-            <div key={item.label} className="flex items-center gap-1">
-              <span className={cn("w-2 h-2 rounded-full", item.color)} />
-              <span className="text-[10px] text-muted-foreground">{item.label}</span>
-            </div>
-          ))}
-        </div>
+        <ul className="mt-1 space-y-0.5 text-[10px] text-muted-foreground">
+          <li><span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" /> <strong>Sn/Km</strong> = Senin & Kamis</li>
+          <li><span className="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1" /> <strong>Ayyamul Bidh</strong> = 13-15 Hijriah</li>
+          <li><span className="inline-block w-2 h-2 rounded-full bg-rose-400 mr-1" /> <strong>Arafah</strong> = 9 Dzulhijjah</li>
+          <li><span className="inline-block w-2 h-2 rounded-full bg-violet-400 mr-1" /> <strong>Asyura</strong> = 10 Muharram | <strong>Tasu'a</strong> = 9 Muharram</li>
+          <li><span className="inline-block w-2 h-2 rounded-full bg-sky-400 mr-1" /> <strong>Syawal</strong> = 1-6 Syawal</li>
+        </ul>
       </div>
     </div>
   );
