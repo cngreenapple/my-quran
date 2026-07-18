@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/Header";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { PuasaCalendar } from "@/components/PuasaCalendar";
 import { PUASA_SUNNAH, CATEGORY_INFO, type FastingCategory, type FastingItem } from "@/data/puasa-sunnah";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,10 @@ export default function PuasaSunnahPage({ onMenuClick }: PuasaSunnahPageProps) {
             <Moon className="w-6 h-6 text-violet-600" aria-hidden="true" />Puasa Sunnah
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">Amalan puasa di luar Ramadan yang diajarkan Rasulullah ﷺ</p>
+        </section>
+
+        <section className="mb-4">
+          <PuasaCalendar />
         </section>
 
         <Card className="border-violet-500/30 bg-gradient-to-br from-violet-500/8 via-violet-500/3 to-transparent mb-4 overflow-hidden">

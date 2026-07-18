@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Compass, MapPin, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { QiblaCompass } from "@/components/QiblaCompass";
 import { usePrayerTimes } from "@/hooks/use-prayer-times";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { cn } from "@/lib/utils";
 
 interface QiblaPageProps {
   onMenuClick: () => void;
@@ -15,6 +17,7 @@ interface QiblaPageProps {
 export default function QiblaPage({ onMenuClick }: QiblaPageProps) {
   useDocumentTitle("Arah Kiblat");
   const { location, locationError, isFetchingLocation, requestLocation } = usePrayerTimes();
+  const [gpsTriggered, setGpsTriggered] = useState(false);
 
   return (
     <div className="min-h-dvh bg-background">
@@ -40,7 +43,8 @@ export default function QiblaPage({ onMenuClick }: QiblaPageProps) {
                   <p className="text-[11px] text-muted-foreground mt-0.5">{locationError}</p>
                 </div>
                 <button onClick={() => requestLocation(true)} disabled={isFetchingLocation} className="px-2.5 py-1 rounded-full bg-amber-500 text-white text-[11px] font-semibold disabled:opacity-60 shrink-0 inline-flex items-center gap-1">
-                  <RefreshCw className="w-3 h-3" />{isFetchingLocation ? "..." : "Coba"}
+                  <RefreshCw className={cn("w-3 h-3", isFetchingLocation && "animate-spin")} />
+                  {isFetchingLocation ? "..." : "Coba"}
                 </button>
               </div>
             </CardContent>
@@ -68,6 +72,28 @@ export default function QiblaPage({ onMenuClick }: QiblaPageProps) {
                     {location.method === "gps" ? "GPS" : location.method === "ip" ? "IP" : location.method === "manual" ? "Manual" : "Default"}
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!gpsTriggered && !locationError && (
+          <Card className="border-emerald-500/40 mt-3">
+            <CardContent className="p-3.5">
+              <div className="flex items-start gap-3">
+                <Compass className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground">GPS untuk akurasi maksimal</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Aktifkan GPS untuk arah kiblat yang lebih akurat</p>
+                </div>
+                <button
+                  onClick={() => { requestLocation(true); setGpsTriggered(true); }}
+                  disabled={isFetchingLocation}
+                  className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[11px] font-semibold disabled:opacity-60 shrink-0 inline-flex items-center gap-1"
+                >
+                  <RefreshCw className={cn("w-3 h-3", isFetchingLocation && "animate-spin")} />
+                  {isFetchingLocation ? "..." : "GPS"}
+                </button>
               </div>
             </CardContent>
           </Card>
