@@ -1,5 +1,7 @@
 import type { Surah, SurahDetail } from "@/types/quran";
 import type { ApiDoaItem } from "@/types/dzikir";
+import surahsData from "../data/quran/surahs.json";
+import tafsirData from "../data/quran/tafsir.json";
 
 const BASE_URL = "https://equran.id/api/v2";
 const TAFSIR_URL = "https://equran.id/api/v2/tafsir";
@@ -36,6 +38,10 @@ export const QARI_LIST: QariInfo[] = [
 
 const QARI_STORAGE_KEY = "quran-selected-qari";
 const DEFAULT_QARI_ID = "05";
+const localSurahList = surahsData as unknown as SurahDetail[];
+const localTafsirMap = new Map<number, TafsirItem[]>(
+  (tafsirData as Array<{ nomor: number; tafsir: TafsirItem[] }>).map((item) => [item.nomor, item.tafsir]),
+);
 
 /**
  * Get qari ID dari localStorage (dipanggil saat play, bukan saat render).
@@ -78,15 +84,22 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
 }
 
 export async function fetchSurahList(): Promise<Surah[]> {
-  const response = await fetchWithTimeout(`${BASE_URL}/surat`);
-  const data = await response.json();
-  return data.data;
+  return localSurahList.map(({ ayat, ...rest }) => rest) as Surah[];
 }
 
 export async function fetchSurahDetail(nomor: number): Promise<SurahDetail> {
-  const response = await fetchWithTimeout(`${BASE_URL}/surat/${nomor}`);
-  const data = await response.json();
-  return data.data;
+  const localDetail = localSurahList.find((surah) => surah.nomor === nomor);
+  if (localDetail) {
+    return localDetail;
+  }
+
+  try {
+    const response = await fetchWithTimeout(`${BASE_URL}/surat/${nomor}`);
+    const data = await response.json();
+    return data.data;
+  } catch {
+    throw new Error(`Surah ${nomor} not available locally`);
+  }
 }
 
 /**
@@ -105,9 +118,18 @@ export interface TafsirSurahResponse {
 }
 
 export async function fetchTafsirSurah(nomor: number): Promise<TafsirItem[]> {
-  const response = await fetchWithTimeout(`${TAFSIR_URL}/${nomor}`);
-  const data = await response.json();
-  return data.data?.tafsir ?? [];
+  const localTafsir = localTafsirMap.get(nomor);
+  if (localTafsir) {
+    return localTafsir;
+  }
+
+  try {
+    const response = await fetchWithTimeout(`${TAFSIR_URL}/${nomor}`);
+    const data = await response.json();
+    return data.data?.tafsir ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -146,7 +168,12 @@ export function getAudioSources(surahNumber: number): AudioSource[] {
   const padded = String(surahNumber).padStart(3, "0");
   const folder = getSelectedQariFolder();
   return [
-    // Primary: equran.id CDN (qari yang dipilih)
+    // Primary: bundled local audio (repo-hosted)
+    {
+      src: `/audio/${folder}/full/${padded}.mp3`,
+      type: "audio/mpeg",
+    },
+    // Secondary: equran.id CDN (qari yang dipilih)
     {
       src: `https://cdn.equran.id/audio-full/${folder}/${padded}.mp3`,
       type: "audio/mpeg",
@@ -183,7 +210,12 @@ export function getAyatAudioSources(surahNumber: number, ayatNumber: number): Au
   const combined = `${paddedSurah}${paddedAyat}`;
   const folder = getSelectedQariFolder();
   return [
-    // Primary: equran.id CDN (qari yang dipilih)
+    // Primary: bundled local audio (repo-hosted)
+    {
+      src: `/audio/${folder}/partial/${combined}.mp3`,
+      type: "audio/mpeg",
+    },
+    // Secondary: equran.id CDN (qari yang dipilih)
     {
       src: `https://cdn.equran.id/audio-partial/${folder}/${combined}.mp3`,
       type: "audio/mpeg",
