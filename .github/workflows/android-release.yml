@@ -62,13 +62,29 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          mkdir -p android/keystore
+
           if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
-            mkdir -p android/keystore
             echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/keystore/release.keystore
             echo "storeFile=$GITHUB_WORKSPACE/android/keystore/release.keystore" >> android/gradle.properties
             echo "storePassword=$ANDROID_KEYSTORE_PASSWORD" >> android/gradle.properties
             echo "keyAlias=$ANDROID_KEY_ALIAS" >> android/gradle.properties
             echo "keyPassword=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
+          else
+            keytool -genkeypair -v \
+              -keystore android/keystore/release.keystore \
+              -alias androiddebugkey \
+              -storepass android \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+
+            echo "storeFile=$GITHUB_WORKSPACE/android/keystore/release.keystore" >> android/gradle.properties
+            echo "storePassword=android" >> android/gradle.properties
+            echo "keyAlias=androiddebugkey" >> android/gradle.properties
+            echo "keyPassword=android" >> android/gradle.properties
           fi
 
       - name: Build release APK
@@ -81,9 +97,13 @@ jobs:
         id: artifacts
         run: |
           mkdir -p artifacts
-          RELEASE_APK=$(find android/app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -n 1)
+          RELEASE_APK="android/app/build/outputs/apk/release/app-release.apk"
 
-          if [ -z "$RELEASE_APK" ]; then
+          if [ ! -f "$RELEASE_APK" ]; then
+            RELEASE_APK=$(find android/app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -n 1)
+          fi
+
+          if [ -z "$RELEASE_APK" ] || [ ! -f "$RELEASE_APK" ]; then
             echo "Release APK not found in android/app/build/outputs/apk/release"
             exit 1
           fi
