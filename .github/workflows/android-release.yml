@@ -71,12 +71,6 @@ jobs:
             echo "keyPassword=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
           fi
 
-      - name: Build debug APK
-        working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
       - name: Build release APK
         working-directory: android
         run: |
@@ -87,43 +81,43 @@ jobs:
         id: artifacts
         run: |
           mkdir -p artifacts
-          DEBUG_APK="android/app/build/outputs/apk/debug/app-debug.apk"
           RELEASE_APK=$(find android/app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -n 1)
-
-          if [ ! -f "$DEBUG_APK" ]; then
-            echo "Debug APK not found at $DEBUG_APK"
-            exit 1
-          fi
 
           if [ -z "$RELEASE_APK" ]; then
             echo "Release APK not found in android/app/build/outputs/apk/release"
             exit 1
           fi
 
-          VERSION_TAG="${GITHUB_REF_NAME:-dev}"
-          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
-          cp "$DEBUG_APK" "artifacts/my-quran-debug-${VERSION_TAG}-b${BUILD_NUMBER}.apk"
-          cp "$RELEASE_APK" "artifacts/my-quran-release-${VERSION_TAG}-b${BUILD_NUMBER}.apk"
+          VERSION_SOURCE="${GITHUB_REF_NAME:-dev}"
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            VERSION_SOURCE="${GITHUB_REF_NAME}"
+          else
+            PACKAGE_VERSION=$(node -p "require('./package.json').version")
+            if [ -n "$PACKAGE_VERSION" ] && [ "$PACKAGE_VERSION" != "0.0.0" ]; then
+              VERSION_SOURCE="$PACKAGE_VERSION"
+            fi
+          fi
 
-          echo "debug_artifact=artifacts/my-quran-debug-${VERSION_TAG}-b${BUILD_NUMBER}.apk" >> "$GITHUB_OUTPUT"
-          echo "release_artifact=artifacts/my-quran-release-${VERSION_TAG}-b${BUILD_NUMBER}.apk" >> "$GITHUB_OUTPUT"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+          SAFE_VERSION=$(echo "$VERSION_SOURCE" | tr '/:' '-' | tr '[:upper:]' '[:lower:]')
+          cp "$RELEASE_APK" "artifacts/my-quran-release-${SAFE_VERSION}-b${BUILD_NUMBER}.apk"
+          echo "release_artifact=artifacts/my-quran-release-${SAFE_VERSION}-b${BUILD_NUMBER}.apk" >> "$GITHUB_OUTPUT"
+          echo "version=${SAFE_VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: my-quran-apks
           path: |
-            artifacts/my-quran-debug-*.apk
             artifacts/my-quran-release-*.apk
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          name: Release ${{ github.ref_name }} (Build ${{ github.run_number }})
-          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.artifacts.outputs.version }} (Build ${{ github.run_number }})
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v{0}-b{1}', steps.artifacts.outputs.version, github.run_number) }}
           files: |
-            ${{ steps.artifacts.outputs.debug_artifact }}
             ${{ steps.artifacts.outputs.release_artifact }}
           draft: false
           prerelease: false
