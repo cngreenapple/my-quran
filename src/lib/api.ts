@@ -3,6 +3,7 @@ import type { ApiDoaItem } from "@/types/dzikir";
 import surahsData from "../data/quran/surahs.json";
 import tafsirData from "../data/quran/tafsir.json";
 
+const SELF_API = "/api/quran";
 const BASE_URL = "https://equran.id/api/v2";
 const TAFSIR_URL = "https://equran.id/api/v2/tafsir";
 const DOA_URL = "https://equran.id/api/doa";
@@ -83,23 +84,30 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
   }
 }
 
+/** Attempt self-hosted API, fall back to local data, then remote equran.id. */
+async function selfFetch<T>(params: string, localFallback: () => T): Promise<T> {
+  try {
+    const res = await fetchWithTimeout(`${SELF_API}${params}`);
+    const json = await res.json();
+    if (json.success && json.data) return json.data as T;
+  } catch {
+    // self-hosted unavailable — continue to fallback
+  }
+  return localFallback();
+}
+
 export async function fetchSurahList(): Promise<Surah[]> {
-  return localSurahList.map(({ ayat, ...rest }) => rest) as Surah[];
+  return selfFetch('?type=surahs', () =>
+    localSurahList.map(({ ayat, ...rest }) => rest) as Surah[],
+  );
 }
 
 export async function fetchSurahDetail(nomor: number): Promise<SurahDetail> {
-  const localDetail = localSurahList.find((surah) => surah.nomor === nomor);
-  if (localDetail) {
-    return localDetail;
-  }
-
-  try {
-    const response = await fetchWithTimeout(`${BASE_URL}/surat/${nomor}`);
-    const data = await response.json();
-    return data.data;
-  } catch {
+  return selfFetch(`?type=detail&nomor=${nomor}`, () => {
+    const detail = localSurahList.find((surah) => surah.nomor === nomor);
+    if (detail) return detail;
     throw new Error(`Surah ${nomor} not available locally`);
-  }
+  });
 }
 
 /**
@@ -118,30 +126,27 @@ export interface TafsirSurahResponse {
 }
 
 export async function fetchTafsirSurah(nomor: number): Promise<TafsirItem[]> {
-  const localTafsir = localTafsirMap.get(nomor);
-  if (localTafsir) {
-    return localTafsir;
-  }
-
-  try {
-    const response = await fetchWithTimeout(`${TAFSIR_URL}/${nomor}`);
-    const data = await response.json();
-    return data.data?.tafsir ?? [];
-  } catch {
+  return selfFetch(`?type=tafsir&nomor=${nomor}`, () => {
+    const localTafsir = localTafsirMap.get(nomor);
+    if (localTafsir) return localTafsir;
     return [];
-  }
+  });
 }
 
 /**
  * Fetch kumpulan doa dari equran.id/api/doa
  */
 export async function fetchDoaList(): Promise<ApiDoaItem[]> {
-  const response = await fetchWithTimeout(DOA_URL);
-  const data = await response.json();
-  if (data.status !== "success") {
+  try {
+    const response = await fetchWithTimeout(DOA_URL);
+    const data = await response.json();
+    if (data.status !== "success") {
+      throw new Error("Gagal mengambil data doa");
+    }
+    return data.data as ApiDoaItem[];
+  } catch {
     throw new Error("Gagal mengambil data doa");
   }
-  return data.data as ApiDoaItem[];
 }
 
 // ============================================================================
