@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 
+def signingConfigEnabled = project.hasProperty('storeFile') && project.findProperty('storeFile')?.toString()?.trim()
+
 android {
     namespace = "com.cngreenapple.myquran"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,10 +18,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (signingConfigEnabled) {
+                storeFile file(project.property('storeFile'))
+                storePassword project.findProperty('storePassword')?.toString() ?: ''
+                keyAlias project.findProperty('keyAlias')?.toString() ?: ''
+                keyPassword project.findProperty('keyPassword')?.toString() ?: ''
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (signingConfigEnabled) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
