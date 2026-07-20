@@ -86,8 +86,21 @@ jobs:
       - name: Rename APK artifacts
         run: |
           mkdir -p artifacts
-          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/my-quran-debug.apk
-          cp android/app/build/outputs/apk/release/app-release.apk artifacts/my-quran-release.apk
+          DEBUG_APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE_APK=$(find android/app/build/outputs/apk/release -maxdepth 1 -type f -name "*.apk" | head -n 1)
+
+          if [ ! -f "$DEBUG_APK" ]; then
+            echo "Debug APK not found at $DEBUG_APK"
+            exit 1
+          fi
+
+          if [ -z "$RELEASE_APK" ]; then
+            echo "Release APK not found in android/app/build/outputs/apk/release"
+            exit 1
+          fi
+
+          cp "$DEBUG_APK" artifacts/my-quran-debug.apk
+          cp "$RELEASE_APK" artifacts/my-quran-release.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
